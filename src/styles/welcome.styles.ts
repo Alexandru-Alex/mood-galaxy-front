@@ -5,7 +5,7 @@ import { Palette, Spacing } from '@/constants/theme';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#050410',
   },
   keyboardView: {
     flex: 1,

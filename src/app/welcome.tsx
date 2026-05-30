@@ -6,6 +6,7 @@ import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from
 import { Astronaut } from '@/components/astronaut';
 import { Float } from '@/components/float';
 import { PersonIcon } from '@/components/person-icon';
+import { SpaceBackground } from '@/components/space-background';
 import { Starfield } from '@/components/starfield';
 import { ThemedText } from '@/components/themed-text';
 import { Palette } from '@/constants/theme';
@@ -27,6 +28,7 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
+      <SpaceBackground />
       <Starfield />
       <KeyboardAvoidingView
         style={styles.keyboardView}

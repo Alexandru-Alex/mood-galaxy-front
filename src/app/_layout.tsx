@@ -11,6 +11,7 @@ export default function RootLayout() {
       <Stack initialRouteName="landing" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="landing" />
         <Stack.Screen name="welcome" />
+        <Stack.Screen name="dashboard" />
         <Stack.Screen name="(tabs)" />
       </Stack>
     </ThemeProvider>
