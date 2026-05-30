@@ -7,20 +7,52 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+/**
+ * Mood Galaxy brand palette. Use these raw values for accents, gradients and
+ * decorative galaxy elements. For UI surfaces/text prefer the semantic tokens
+ * in `Colors` below so light/dark mode stays consistent.
+ */
+export const Palette = {
+  /** Majorelle Blue — primary brand color, creative & elegant. */
+  majorelleBlue: '#574ae2',
+  /** Imperial Blue — deep, noble blue; great for dark backgrounds. */
+  imperialBlue: '#222a68',
+  /** Dusty Grape — understated, velvety secondary. */
+  dustyGrape: '#654597',
+  /** Bright Lavender — playful, attention-grabbing accent. */
+  brightLavender: '#ab81cd',
+  /** Mauve — soft pastel highlight. */
+  mauve: '#e2adf2',
+} as const;
+
+export type PaletteColor = keyof typeof Palette;
+
 export const Colors = {
   light: {
-    text: '#000000',
+    text: '#1c1a3a',
     background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    backgroundElement: '#f4f1fb',
+    backgroundSelected: '#e8e1f6',
+    textSecondary: '#615b86',
+    tint: Palette.majorelleBlue,
+    primary: Palette.majorelleBlue,
+    secondary: Palette.dustyGrape,
+    accent: Palette.brightLavender,
+    highlight: Palette.mauve,
+    border: '#ddd6ef',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#f3eefb',
+    background: '#0f1230',
+    backgroundElement: Palette.imperialBlue,
+    backgroundSelected: '#2e3680',
+    textSecondary: '#b9b3d6',
+    tint: Palette.brightLavender,
+    primary: Palette.majorelleBlue,
+    secondary: Palette.dustyGrape,
+    accent: Palette.brightLavender,
+    highlight: Palette.mauve,
+    border: '#2e3680',
   },
 } as const;
 
