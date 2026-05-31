@@ -20,11 +20,10 @@ import {
 import { getStoredSeed } from '@/lib/api';
 
 const START_YEAR = 2026;
-const SLOT_RADIUS = 70;
+const SLOT_RADIUS = 120;
 const FALLBACK_SEED = 42;
 
 const MOCK_ENTRIES: { date: string }[] = [
-  // constellation c0
   { date: '2026-01-03' },
   { date: '2026-01-07' },
   { date: '2026-01-12' },
@@ -32,14 +31,6 @@ const MOCK_ENTRIES: { date: string }[] = [
   { date: '2026-01-24' },
   { date: '2026-02-02' },
   { date: '2026-02-09' },
-  // constellation c1
-  { date: '2026-03-05' },
-  { date: '2026-03-11' },
-  { date: '2026-03-18' },
-  { date: '2026-03-25' },
-  { date: '2026-04-01' },
-  { date: '2026-04-08' },
-  { date: '2026-04-15' },
 ];
 
 const HALO = 22;
