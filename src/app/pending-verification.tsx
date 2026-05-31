@@ -14,8 +14,11 @@ export default function PendingVerificationScreen() {
   const router = useRouter();
 
   const handleBackToLogin = async () => {
-    await logout();
-    router.replace('/landing');
+    try {
+      await logout();
+    } finally {
+      router.replace('/landing');
+    }
   };
 
   return (
