@@ -247,8 +247,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
-    paddingHorizontal: Spacing.four,
-    marginTop: Spacing.two,
   },
   navItem: {
     padding: Spacing.two,
