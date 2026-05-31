@@ -23,7 +23,7 @@ import { EyeIcon } from '@/components/eye-icon';
 import { LockIcon } from '@/components/lock-icon';
 import { MailIcon } from '@/components/mail-icon';
 import { Palette } from '@/constants/theme';
-import { api, BASE_URL, saveToken } from '@/lib/api';
+import { api, BASE_URL, saveToken, saveGalaxySeed } from '@/lib/api';
 import { authStyles as auth } from '@/styles/auth-modal.styles';
 
 type AuthModalProps = {
@@ -69,12 +69,13 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
         password,
       );
       if (mode === 'signup') {
-        const data = await api.post<{ token: string; newUser: boolean }>(
+        const data = await api.post<{ token: string; newUser: boolean; seed?: number }>(
           '/sign-up',
           { email, password: hashedPassword },
           { auth: false },
         );
         await saveToken(data.token);
+        if (data.seed !== undefined) await saveGalaxySeed(data.seed);
         if (Platform.OS === 'web') {
           localStorage.setItem('is_new_user', String(data.newUser));
           localStorage.setItem('pending_email', email);
@@ -84,12 +85,13 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
         }
         onSuccess(data.newUser, false);
       } else {
-        const data = await api.post<{ token: string; newUser: boolean }>(
+        const data = await api.post<{ token: string; newUser: boolean; seed?: number }>(
           '/sign-in',
           { email, password: hashedPassword },
           { auth: false },
         );
         await saveToken(data.token);
+        if (data.seed !== undefined) await saveGalaxySeed(data.seed);
         // Check email verification: 403 with "not verified" means pending
         const checkRes = await fetch(`${BASE_URL}/accounts`, {
           headers: { Authorization: data.token },

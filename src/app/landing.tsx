@@ -19,7 +19,7 @@ import { Starfield } from '@/components/starfield';
 import { ThemedText } from '@/components/themed-text';
 import { useAudio } from '@/context/audio-context';
 import { SoundIcon } from '@/components/sound-icon';
-import { api, getStoredToken, getPendingEmail, saveToken } from '@/lib/api';
+import { api, getStoredToken, getPendingEmail, saveToken, saveGalaxySeed } from '@/lib/api';
 import { styles } from '@/styles/landing.styles';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -92,12 +92,13 @@ export default function LandingScreen() {
   const handleGoogleToken = async (accessToken: string) => {
     setGoogleLoading(true);
     try {
-      const data = await api.post<{ token: string; newUser: boolean }>(
+      const data = await api.post<{ token: string; newUser: boolean; seed?: number }>(
         '/authorization-google',
         { token: accessToken, provider: 'google' },
         { auth: false },
       );
       await saveToken(data.token);
+      if (data.seed !== undefined) await saveGalaxySeed(data.seed);
       if (Platform.OS === 'web') {
         localStorage.setItem('is_new_user', String(data.newUser));
       } else {
@@ -164,9 +165,7 @@ export default function LandingScreen() {
         </StarCircle>
 
         <View style={styles.header}>
-          <ThemedText
-            type="title"
-            style={styles.title}>
+          <ThemedText type="title" style={styles.title}>
             Mood Galaxy
           </ThemedText>
           <Text style={styles.subtitle}>Your feelings, one star at a time</Text>
