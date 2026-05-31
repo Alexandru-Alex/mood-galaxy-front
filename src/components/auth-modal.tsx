@@ -1,8 +1,5 @@
 import * as Crypto from 'expo-crypto';
-import * as Google from 'expo-auth-session/providers/google';
-import { makeRedirectUri } from 'expo-auth-session';
 import * as SecureStore from 'expo-secure-store';
-import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -22,24 +19,14 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { GoogleLogo } from '@/components/google-logo';
 import { MailIcon } from '@/components/mail-icon';
 import { Palette } from '@/constants/theme';
 import { api, BASE_URL, saveToken } from '@/lib/api';
 import { authStyles as auth } from '@/styles/auth-modal.styles';
 
-WebBrowser.maybeCompleteAuthSession();
-
-const GOOGLE_CLIENT_IDS = {
-  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '',
-  androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? '',
-  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '',
-};
-
 type AuthModalProps = {
   visible: boolean;
   onClose: () => void;
-  /** emailVerified=undefined means no email check needed (Google path) */
   onSuccess: (newUser: boolean, emailVerified?: boolean) => void;
 };
 
@@ -55,72 +42,6 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmFocused, setConfirmFocused] = useState(false);
-
-  const [googleRequest, googleResponse, googlePromptAsync] = Google.useAuthRequest({
-    ...GOOGLE_CLIENT_IDS,
-    redirectUri: makeRedirectUri({ scheme: 'moodgalaxy', path: 'auth' }),
-  });
-
-  useEffect(() => {
-    if (googleResponse?.type === 'success') {
-      const token = googleResponse.authentication?.accessToken;
-      if (token) handleGoogleToken(token);
-    }
-  }, [googleResponse]);
-
-  useEffect(() => {
-    if (Platform.OS !== 'web') {
-      const { GoogleSignin } = require('@react-native-google-signin/google-signin');
-      GoogleSignin.configure({
-        webClientId: GOOGLE_CLIENT_IDS.webClientId,
-        iosClientId: GOOGLE_CLIENT_IDS.iosClientId,
-        offlineAccess: false,
-      });
-    }
-  }, []);
-
-  const handleNativeGoogleSignIn = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const { GoogleSignin } = require('@react-native-google-signin/google-signin');
-      await GoogleSignin.hasPlayServices();
-      setLoading(false);
-      // Close modal before native intent — RN Modal has higher Z-order than the account picker
-      onClose();
-      await new Promise(resolve => setTimeout(resolve, 150));
-      await GoogleSignin.signOut().catch(() => {});
-      await GoogleSignin.signIn();
-      const tokens = await GoogleSignin.getTokens();
-      await handleGoogleToken(tokens.accessToken);
-    } catch (e: unknown) {
-      setLoading(false);
-      setError(e instanceof Error ? e.message : 'Google sign-in failed. Try again.');
-    }
-  };
-
-  const handleGoogleToken = async (accessToken: string) => {
-    setLoading(true);
-    setError('');
-    try {
-      const data = await api.post<{ token: string; newUser: boolean }>(
-        '/authorization-google',
-        { token: accessToken, provider: 'google' },
-        { auth: false },
-      );
-      await saveToken(data.token);
-      if (Platform.OS === 'web') {
-        localStorage.setItem('is_new_user', String(data.newUser));
-      } else {
-        await SecureStore.setItemAsync('is_new_user', String(data.newUser));
-      }
-      onSuccess(data.newUser);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Google sign-in failed. Try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async () => {
     setError('');
@@ -219,7 +140,7 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
         <Animated.View style={[auth.card, cardStyle]}>
           <View style={auth.starStrip}>
             {['✦', '★', '✦', '★', '✦'].map((s, i) => (
-              <Text key={i} style={auth.starEmoji}>{s}</Text>
+              <Text key={`${s}-${i}`} style={auth.starEmoji}>{s}</Text>
             ))}
           </View>
 
@@ -310,22 +231,6 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
               <Text style={auth.submitText}>
                 {loading ? '...' : mode === 'login' ? 'Sign In' : 'Create Account'}
               </Text>
-            </Pressable>
-
-            <View style={auth.divider}>
-              <View style={auth.dividerLine} />
-              <Text style={auth.dividerText}>or</Text>
-              <View style={auth.dividerLine} />
-            </View>
-
-            <Pressable
-              style={({ pressed }) => [auth.googleBtn, pressed && auth.googleBtnPressed]}
-              onPress={() =>
-                Platform.OS === 'web' ? googlePromptAsync() : handleNativeGoogleSignIn()
-              }
-              disabled={loading || (Platform.OS === 'web' && !googleRequest)}>
-              <GoogleLogo size={20} />
-              <Text style={auth.googleText}>Continue with Google</Text>
             </Pressable>
           </ScrollView>
         </Animated.View>

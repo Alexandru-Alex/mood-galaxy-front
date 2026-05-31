@@ -1,7 +1,10 @@
 import { Sora_700Bold, useFonts } from '@expo-google-fonts/sora';
+import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
 import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { Platform, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,14 +18,29 @@ import { SpaceBackground } from '@/components/space-background';
 import { StarCircle } from '@/components/star-circle';
 import { Starfield } from '@/components/starfield';
 import { ThemedText } from '@/components/themed-text';
-import { getStoredToken, getPendingEmail } from '@/lib/api';
+import { api, getStoredToken, getPendingEmail, saveToken } from '@/lib/api';
 import { styles } from '@/styles/landing.styles';
+
+WebBrowser.maybeCompleteAuthSession();
+
+const GOOGLE_CLIENT_IDS = {
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '',
+  androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? '',
+  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '',
+};
 
 export default function LandingScreen() {
   const [fontsLoaded] = useFonts({ Sora_700Bold });
   const [authVisible, setAuthVisible] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
 
+  const [googleRequest, googleResponse, googlePromptAsync] = Google.useAuthRequest({
+    ...GOOGLE_CLIENT_IDS,
+    redirectUri: makeRedirectUri({ scheme: 'moodgalaxy', path: 'auth' }),
+  });
+
+  // Boot redirect: skip landing if already authenticated
   useEffect(() => {
     getStoredToken().then(async (token) => {
       if (!token) return;
@@ -38,6 +56,81 @@ export default function LandingScreen() {
       router.replace(isNew === 'true' ? '/welcome' : '/dashboard');
     });
   }, []);
+
+  // Handle Google OAuth response (web flow)
+  useEffect(() => {
+    if (googleResponse?.type === 'success') {
+      const token = googleResponse.authentication?.accessToken;
+      if (token) handleGoogleToken(token);
+    }
+  }, [googleResponse]);
+
+  // Configure native Google Sign-In SDK
+  useEffect(() => {
+    if (Platform.OS !== 'web') {
+      const { GoogleSignin } = require('@react-native-google-signin/google-signin');
+      GoogleSignin.configure({
+        webClientId: GOOGLE_CLIENT_IDS.webClientId,
+        iosClientId: GOOGLE_CLIENT_IDS.iosClientId,
+        offlineAccess: false,
+      });
+    }
+  }, []);
+
+  const handleGoogleToken = async (accessToken: string) => {
+    setGoogleLoading(true);
+    try {
+      const data = await api.post<{ token: string; newUser: boolean }>(
+        '/authorization-google',
+        { token: accessToken, provider: 'google' },
+        { auth: false },
+      );
+      await saveToken(data.token);
+      if (Platform.OS === 'web') {
+        localStorage.setItem('is_new_user', String(data.newUser));
+      } else {
+        await SecureStore.setItemAsync('is_new_user', String(data.newUser));
+      }
+      router.replace(data.newUser ? '/welcome' : '/dashboard');
+    } catch (e: unknown) {
+      console.error('Google auth error:', e);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleNativeGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      const { GoogleSignin } = require('@react-native-google-signin/google-signin');
+      await GoogleSignin.hasPlayServices();
+      setGoogleLoading(false);
+      await GoogleSignin.signOut().catch(() => {});
+      await GoogleSignin.signIn();
+      const tokens = await GoogleSignin.getTokens();
+      await handleGoogleToken(tokens.accessToken);
+    } catch (e: unknown) {
+      setGoogleLoading(false);
+      console.error('Native Google sign-in error:', e);
+    }
+  };
+
+  const handleGooglePress = () => {
+    if (Platform.OS === 'web') {
+      googlePromptAsync();
+    } else {
+      handleNativeGoogleSignIn();
+    }
+  };
+
+  const handleAuthSuccess = (newUser: boolean, emailVerified = true) => {
+    setAuthVisible(false);
+    if (!emailVerified) {
+      router.replace('/pending-verification');
+    } else {
+      router.replace(newUser ? '/welcome' : '/dashboard');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -61,7 +154,10 @@ export default function LandingScreen() {
         </View>
 
         <View style={styles.buttons}>
-          <GoogleButton onPress={() => setAuthVisible(true)} />
+          <GoogleButton
+            onPress={handleGooglePress}
+            disabled={googleLoading || (Platform.OS === 'web' && !googleRequest)}
+          />
           <EmailButton onPress={() => setAuthVisible(true)} />
         </View>
 
@@ -71,14 +167,7 @@ export default function LandingScreen() {
       <AuthModal
         visible={authVisible}
         onClose={() => setAuthVisible(false)}
-        onSuccess={(newUser, emailVerified = true) => {
-          setAuthVisible(false);
-          if (!emailVerified) {
-            router.replace('/pending-verification');
-          } else {
-            router.replace(newUser ? '/welcome' : '/dashboard');
-          }
-        }}
+        onSuccess={handleAuthSuccess}
       />
     </View>
   );
