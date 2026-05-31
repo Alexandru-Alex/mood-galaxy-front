@@ -12,8 +12,9 @@ import { api, getStoredSeed } from '@/lib/api';
 
 const FALLBACK_SEED = 42;
 const START_YEAR = 2026;
+const MAX_SLOTS = 7;
 
-const MOCK_ENTRIES: Entry[] = [
+const DEV_MOCK_ENTRIES: Entry[] = [
   { entryIndex: 0, date: '2026-01-03', mood: 'JOYFUL' },
   { entryIndex: 1, date: '2026-01-07', mood: 'CALM' },
   { entryIndex: 2, date: '2026-01-12', mood: 'NEUTRAL' },
@@ -24,7 +25,7 @@ export default function DashboardScreen() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [seed, setSeed] = useState(FALLBACK_SEED);
-  const [entries, setEntries] = useState<Entry[]>(MOCK_ENTRIES);
+  const [entries, setEntries] = useState<Entry[]>(__DEV__ ? DEV_MOCK_ENTRIES : []);
   const [startYear, setStartYear] = useState(START_YEAR);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -52,12 +53,13 @@ export default function DashboardScreen() {
       setStartYear(data.startYear);
     } catch (e) {
       console.error(e);
+      setPickerVisible(true);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const canAdd = entries.length < 7 && !submitting;
+  const canAdd = entries.length < MAX_SLOTS && !submitting;
 
   return (
     <View style={styles.container}>
@@ -83,9 +85,9 @@ export default function DashboardScreen() {
         style={[styles.hud, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}
         pointerEvents="box-none">
         <View style={styles.hudTop} pointerEvents="none">
-          <Text style={styles.counter}>{entries.length} / 7</Text>
+          <Text style={styles.counter}>{entries.length} / {MAX_SLOTS}</Text>
           <Text style={styles.hint}>
-            {entries.length >= 7 ? 'Constellation complete ✦' : 'Add your mood for today'}
+            {entries.length >= MAX_SLOTS ? 'Constellation complete ✦' : 'Add your mood for today'}
           </Text>
         </View>
 
