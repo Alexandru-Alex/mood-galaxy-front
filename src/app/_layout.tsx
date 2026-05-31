@@ -48,6 +48,7 @@ export default function RootLayout() {
           <Stack.Screen name="pending-verification" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="galaxy" />
+          <Stack.Screen name="auth" />
         </Stack>
       </ThemeProvider>
     </AudioProvider>
