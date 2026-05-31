@@ -15,7 +15,7 @@ import { SpaceBackground } from '@/components/space-background';
 import { StarCircle } from '@/components/star-circle';
 import { Starfield } from '@/components/starfield';
 import { ThemedText } from '@/components/themed-text';
-import { getStoredToken } from '@/lib/api';
+import { getStoredToken, getPendingEmail } from '@/lib/api';
 import { styles } from '@/styles/landing.styles';
 
 export default function LandingScreen() {
@@ -26,10 +26,7 @@ export default function LandingScreen() {
   useEffect(() => {
     getStoredToken().then(async (token) => {
       if (!token) return;
-      const pendingEmail =
-        Platform.OS === 'web'
-          ? localStorage.getItem('pending_email')
-          : await SecureStore.getItemAsync('pending_email');
+      const pendingEmail = await getPendingEmail();
       if (pendingEmail) {
         router.replace('/pending-verification');
         return;
