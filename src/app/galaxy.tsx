@@ -1,5 +1,5 @@
 // src/app/galaxy.tsx
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import Svg, { Polyline } from 'react-native-svg';
@@ -106,13 +106,15 @@ export default function GalaxyScreen() {
   const [seed, setSeed] = useState<number>(FALLBACK_SEED);
 
   useEffect(() => {
-    getStoredSeed().then((s) => {
-      if (s !== null) setSeed(s);
-    });
+    getStoredSeed()
+      .then((s) => { if (s !== null) setSeed(s); })
+      .catch(console.error);
   }, []);
 
-  const view: GalaxyView = { centerX: width / 2, centerY: height / 2, zoom: 1 };
-  const constellations = buildConstellations(seed, view);
+  const constellations = useMemo(
+    () => buildConstellations(seed, { centerX: width / 2, centerY: height / 2, zoom: 1 }),
+    [seed, width, height],
+  );
 
   return (
     <View style={styles.container}>
