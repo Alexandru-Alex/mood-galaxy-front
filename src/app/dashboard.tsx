@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -163,6 +164,17 @@ export default function DashboardScreen() {
             onPress={() => setPickerVisible((v) => !v)}>
             <Text style={styles.addBtnText}>+ Cum te simți</Text>
           </Pressable>
+          <View style={styles.bottomNav}>
+            <Pressable style={styles.navItem}>
+              <Ionicons name="home" size={24} color={Palette.mauve} />
+            </Pressable>
+            <Pressable style={styles.navItem}>
+              <Ionicons name="planet-outline" size={24} color={Palette.brightLavender} />
+            </Pressable>
+            <Pressable style={styles.navItem}>
+              <Ionicons name="person-outline" size={24} color={Palette.brightLavender} />
+            </Pressable>
+          </View>
         </View>
       </View>
     </View>
@@ -230,5 +242,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#ffffff',
     letterSpacing: 0.3,
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    paddingHorizontal: Spacing.four,
+    marginTop: Spacing.two,
+  },
+  navItem: {
+    padding: Spacing.two,
   },
 });
