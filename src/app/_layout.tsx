@@ -12,6 +12,7 @@ export default function RootLayout() {
         <Stack.Screen name="landing" />
         <Stack.Screen name="welcome" />
         <Stack.Screen name="dashboard" />
+        <Stack.Screen name="pending-verification" />
         <Stack.Screen name="(tabs)" />
       </Stack>
     </ThemeProvider>
