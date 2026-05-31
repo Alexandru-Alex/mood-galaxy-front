@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 import { Palette, Spacing } from '@/constants/theme';
 
@@ -23,8 +23,18 @@ export const styles = StyleSheet.create({
     color: '#ffffff',
     textAlign: 'center',
     letterSpacing: 1,
-    textShadowColor: Palette.majorelleBlue,
-    textShadowRadius: 24,
+    ...Platform.select({
+      web: {
+        textShadowColor: Palette.majorelleBlue,
+        textShadowRadius: 24,
+        textShadowOffset: { width: 0, height: 0 },
+      },
+      default: {
+        textShadowColor: 'rgba(180, 160, 255, 1)',
+        textShadowRadius: 22,
+        textShadowOffset: { width: 0, height: 1 },
+      },
+    }),
   },
   subtitle: {
     fontSize: 14,
@@ -44,5 +54,12 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 300,
     letterSpacing: 0.2,
+  },
+  muteButton: {
+    position: 'absolute',
+    top: 56,
+    right: 20,
+    zIndex: 10,
+    padding: 8,
   },
 });

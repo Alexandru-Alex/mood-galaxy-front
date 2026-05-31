@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { type DimensionValue, View } from 'react-native';
 import Animated, {
   Easing,
+  SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -46,26 +47,49 @@ function generateStars(count: number): StarData[] {
   }));
 }
 
-function Star({ top, left, size, color, minOpacity, duration, delay }: StarData) {
-  const progress = useSharedValue(minOpacity);
-
-  useEffect(() => {
-    progress.value = withDelay(
-      delay,
-      withRepeat(withTiming(1, { duration, easing: Easing.inOut(Easing.ease) }), -1, true),
-    );
-  }, [progress, delay, duration]);
-
-  const animatedStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
-
+function StarInGroup({ star, progress }: { star: StarData; progress: SharedValue<number> }) {
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: star.minOpacity + progress.value * (1 - star.minOpacity),
+  }));
   return (
     <Animated.View
       style={[
         styles.star,
-        { top, left, width: size, height: size, borderRadius: size / 2, backgroundColor: color },
+        {
+          top: star.top,
+          left: star.left,
+          width: star.size,
+          height: star.size,
+          borderRadius: star.size / 2,
+          backgroundColor: star.color,
+        },
         animatedStyle,
       ]}
     />
+  );
+}
+
+// 5 stars share one shared value → 12 animations instead of 60
+const GROUP_SIZE = 5;
+
+function StarGroup({ stars }: { stars: StarData[] }) {
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    const avgDelay = stars.reduce((s, st) => s + st.delay, 0) / stars.length;
+    const avgDuration = stars.reduce((s, st) => s + st.duration, 0) / stars.length;
+    progress.value = withDelay(
+      avgDelay,
+      withRepeat(withTiming(1, { duration: avgDuration, easing: Easing.inOut(Easing.ease) }), -1, true),
+    );
+  }, [progress]);
+
+  return (
+    <>
+      {stars.map((star, i) => (
+        <StarInGroup key={i} star={star} progress={progress} />
+      ))}
+    </>
   );
 }
 
@@ -73,13 +97,21 @@ type StarfieldProps = {
   count?: number;
 };
 
-export function Starfield({ count = 90 }: StarfieldProps) {
+export function Starfield({ count = 60 }: StarfieldProps) {
   const stars = useMemo(() => generateStars(count), [count]);
+
+  const groups = useMemo(() => {
+    const result: StarData[][] = [];
+    for (let i = 0; i < stars.length; i += GROUP_SIZE) {
+      result.push(stars.slice(i, i + GROUP_SIZE));
+    }
+    return result;
+  }, [stars]);
 
   return (
     <View style={styles.container} pointerEvents="none">
-      {stars.map((star, index) => (
-        <Star key={index} {...star} />
+      {groups.map((group, i) => (
+        <StarGroup key={i} stars={group} />
       ))}
     </View>
   );
