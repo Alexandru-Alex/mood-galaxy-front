@@ -69,7 +69,7 @@ export default function DashboardScreen() {
       .catch(console.error);
 
     api.get<AccountDto>('/accounts')
-      .then((data) => setDisplayName(data.displayName))
+      .then((data) => setDisplayName(data.displayName ?? null))
       .catch(console.error);
   }, []);
 
