@@ -27,13 +27,21 @@ export function generateConstellationShape(
   galaxySeed: number,
   constellationId: string,
   pointCount = 7,
+  minDistance = 0.4,
 ): Point[] {
   const rng = mulberry32(hashSeed(`${galaxySeed}:${constellationId}`));
   const points: Point[] = [];
   for (let i = 0; i < pointCount; i++) {
-    const angle = (i / pointCount) * Math.PI * 2 + (rng() - 0.5) * 2.2;
-    const radius = 0.15 + rng() * 0.85;
-    points.push({ x: Math.cos(angle) * radius, y: Math.sin(angle) * radius });
+    let x: number, y: number;
+    let attempts = 0;
+    do {
+      const angle = (i / pointCount) * Math.PI * 2 + (rng() - 0.5) * 2.2;
+      const radius = 0.15 + rng() * 0.85;
+      x = Math.cos(angle) * radius;
+      y = Math.sin(angle) * radius;
+      attempts++;
+    } while (attempts < 20 && points.some((p) => Math.hypot(p.x - x, p.y - y) < minDistance));
+    points.push({ x: x!, y: y! });
   }
   return points;
 }
