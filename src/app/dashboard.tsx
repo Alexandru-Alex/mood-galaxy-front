@@ -28,6 +28,13 @@ function getGreeting(displayName: string | null): string {
   return displayName ? `${salutation}, ${displayName}` : salutation;
 }
 
+type AccountDto = {
+  id: string;
+  email: string;
+  displayName: string;
+  isNotification: boolean;
+};
+
 const FALLBACK_SEED = 42;
 const START_YEAR = 2026;
 const MAX_SLOTS = 7;
@@ -47,6 +54,7 @@ export default function DashboardScreen() {
   const [startYear, setStartYear] = useState(START_YEAR);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [displayName, setDisplayName] = useState<string | null>(null);
 
   useEffect(() => {
     getStoredSeed()
@@ -58,6 +66,10 @@ export default function DashboardScreen() {
         setEntries(data.entries);
         setStartYear(data.startYear);
       })
+      .catch(console.error);
+
+    api.get<AccountDto>('/accounts')
+      .then((data) => setDisplayName(data.displayName))
       .catch(console.error);
   }, []);
 
