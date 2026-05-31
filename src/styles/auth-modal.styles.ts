@@ -1,23 +1,33 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 import { Palette } from '@/constants/theme';
 
 export const authStyles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
+    paddingTop: 80,
+    paddingHorizontal: 20,
+    ...(Platform.OS === 'web'
+      ? ({ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 } as object)
+      : {}),
   },
   backdropOverlay: {
-    backgroundColor: 'rgba(10, 8, 40, 0.75)',
+    backgroundColor: 'rgba(10, 8, 40, 0.6)',
   },
   card: {
     backgroundColor: '#1a1440',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingBottom: 40,
-    maxHeight: '92%',
-    borderTopWidth: 1,
-    borderColor: Palette.dustyGrape + '55',
+    borderRadius: 28,
+    overflow: 'hidden',
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
+    maxHeight: '88%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 20,
   },
   starStrip: {
     flexDirection: 'row',
