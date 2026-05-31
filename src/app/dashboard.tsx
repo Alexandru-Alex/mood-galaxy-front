@@ -149,7 +149,7 @@ export default function DashboardScreen() {
 
         {mascotPos && (
           <View
-            style={{ position: 'absolute', left: mascotPos.x - 30, top: mascotPos.y - 60 }}
+            style={{ position: 'absolute', left: mascotPos.x - 30, top: mascotPos.y - 52 }}
             pointerEvents="none"
           >
             <AstronautLanding width={60} height={52} />
