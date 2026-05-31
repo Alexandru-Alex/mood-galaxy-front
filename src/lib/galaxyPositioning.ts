@@ -52,9 +52,9 @@ export function getConstellationCenter(
   { ringGap = 90, baseRadius = 40 }: { ringGap?: number; baseRadius?: number } = {},
 ): ConstellationCenter {
   const d = new Date(date);
-  const monthFraction = (d.getMonth() + d.getDate() / 31) / 12;
+  const monthFraction = (d.getUTCMonth() + d.getUTCDate() / 31) / 12;
   const angle = -Math.PI / 2 + monthFraction * Math.PI * 2;
-  const yearIndex = d.getFullYear() - startYear;
+  const yearIndex = Math.max(0, d.getUTCFullYear() - startYear);
   return { angle, radius: baseRadius + yearIndex * ringGap };
 }
 
