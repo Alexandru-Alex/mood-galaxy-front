@@ -7,8 +7,17 @@ import { ConstellationCanvas, type Entry } from '@/components/constellation-canv
 import { MoodPicker, type Mood } from '@/components/mood-picker';
 import { SpaceBackground } from '@/components/space-background';
 import { Starfield } from '@/components/starfield';
+import { AstronautLanding } from '@/components/astronaut-landing';
 import { Palette, Spacing } from '@/constants/theme';
 import { api, getStoredSeed } from '@/lib/api';
+import {
+  constellationIdForEntry,
+  generateConstellationShape,
+  getConstellationCenter,
+  starScreenPosition,
+  type Point,
+  type View as GalaxyView,
+} from '@/lib/galaxyPositioning';
 
 function getFormattedDate(): string {
   return new Date().toLocaleDateString('en-US', {
@@ -38,6 +47,7 @@ type AccountDto = {
 const FALLBACK_SEED = 42;
 const START_YEAR = 2026;
 const MAX_SLOTS = 7;
+const SLOT_RADIUS = 120;
 
 const DEV_MOCK_ENTRIES: Entry[] = [
   { entryIndex: 0, date: '2026-01-03', mood: 'JOYFUL' },
@@ -91,6 +101,15 @@ export default function DashboardScreen() {
 
   const canAdd = entries.length < MAX_SLOTS && !submitting;
 
+  const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
+  const cId = sorted.length > 0 ? constellationIdForEntry(sorted[0].entryIndex) : 'c0';
+  const centerDate = sorted.length > 0 ? sorted[0].date : new Date().toISOString().slice(0, 10);
+  const view: GalaxyView = { centerX: width / 2, centerY: height / 2, zoom: 1 };
+  const center = getConstellationCenter(centerDate, startYear);
+  const shape = generateConstellationShape(seed, cId);
+  const allPositions: Point[] = shape.map((p) => starScreenPosition(center, p, view, SLOT_RADIUS));
+  const mascotPos: Point | null = entries.length < MAX_SLOTS ? allPositions[entries.length] : null;
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -123,6 +142,15 @@ export default function DashboardScreen() {
             {entries.length >= MAX_SLOTS ? 'Constellation complete ✦' : `${entries.length} / ${MAX_SLOTS} ★`}
           </Text>
         </View>
+
+        {mascotPos && (
+          <View
+            style={{ position: 'absolute', left: mascotPos.x - 30, top: mascotPos.y - 60 }}
+            pointerEvents="none"
+          >
+            <AstronautLanding width={60} height={52} />
+          </View>
+        )}
 
         <View style={styles.bottomArea} pointerEvents="box-none">
           <MoodPicker visible={pickerVisible} onSelect={handleMoodSelect} />
