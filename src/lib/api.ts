@@ -108,6 +108,12 @@ export const api = {
     const headers = await buildHeaders();
     const res = await fetch(`${BASE_URL}${path}`, { headers });
     if (!res.ok) return handleErrorResponse(res);
-    return res.json() as Promise<T>;
+    const text = await res.text();
+    if (!text) return undefined as T;
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      return text as T;
+    }
   },
 };
