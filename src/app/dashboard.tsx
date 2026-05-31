@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { type GestureResponderEvent, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { __DEV__ } from 'expo-constants';
 
 import { Constellation, type StarPoint } from '@/components/constellation';
 import { SpaceBackground } from '@/components/space-background';
