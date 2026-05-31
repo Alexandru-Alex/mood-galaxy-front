@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -166,13 +165,13 @@ export default function DashboardScreen() {
           </Pressable>
           <View style={styles.bottomNav}>
             <Pressable style={styles.navItem}>
-              <Ionicons name="home" size={24} color={Palette.mauve} />
+              <Text style={[styles.navIcon, { color: Palette.mauve }]}>⌂</Text>
             </Pressable>
             <Pressable style={styles.navItem}>
-              <Ionicons name="planet-outline" size={24} color={Palette.brightLavender} />
+              <Text style={[styles.navIcon, { color: Palette.brightLavender }]}>◎</Text>
             </Pressable>
             <Pressable style={styles.navItem}>
-              <Ionicons name="person-outline" size={24} color={Palette.brightLavender} />
+              <Text style={[styles.navIcon, { color: Palette.brightLavender }]}>◉</Text>
             </Pressable>
           </View>
         </View>
@@ -250,5 +249,8 @@ const styles = StyleSheet.create({
   },
   navItem: {
     padding: Spacing.two,
+  },
+  navIcon: {
+    fontSize: 22,
   },
 });
