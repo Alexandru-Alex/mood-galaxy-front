@@ -114,10 +114,13 @@ export default function DashboardScreen() {
       <View
         style={[styles.hud, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}
         pointerEvents="box-none">
-        <View style={styles.hudTop} pointerEvents="none">
-          <Text style={styles.counter}>{entries.length} / {MAX_SLOTS}</Text>
-          <Text style={styles.hint}>
-            {entries.length >= MAX_SLOTS ? 'Constellation complete ✦' : 'Add your mood for today'}
+        <View style={styles.topRow} pointerEvents="none">
+          <View>
+            <Text style={styles.dateText}>{getFormattedDate()}</Text>
+            <Text style={styles.greetingText}>{getGreeting(displayName)}</Text>
+          </View>
+          <Text style={styles.progressText}>
+            {entries.length >= MAX_SLOTS ? 'Constellation complete ✦' : `${entries.length} / ${MAX_SLOTS} ★`}
           </Text>
         </View>
 
@@ -151,21 +154,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.four,
   },
-  hudTop: {
-    alignItems: 'center',
-    gap: Spacing.one,
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    width: '100%',
   },
-  counter: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: Palette.mauve,
-    letterSpacing: 1,
-  },
-  hint: {
+  dateText: {
     fontSize: 13,
     fontWeight: '600',
     color: Palette.brightLavender,
     letterSpacing: 0.3,
+  },
+  greetingText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginTop: 2,
+  },
+  progressText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Palette.mauve,
+    letterSpacing: 0.5,
+    textAlign: 'right',
   },
   bottomArea: {
     alignItems: 'center',
