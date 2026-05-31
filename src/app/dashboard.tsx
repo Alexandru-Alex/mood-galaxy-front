@@ -151,14 +151,13 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'stretch',
     paddingHorizontal: Spacing.four,
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    width: '100%',
   },
   dateText: {
     fontSize: 13,
