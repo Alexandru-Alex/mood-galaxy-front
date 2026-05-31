@@ -31,8 +31,8 @@ export function generateConstellationShape(
   const rng = mulberry32(hashSeed(`${galaxySeed}:${constellationId}`));
   const points: Point[] = [];
   for (let i = 0; i < pointCount; i++) {
-    const angle = (i / pointCount) * Math.PI * 2 + (rng() - 0.5) * 0.9;
-    const radius = 0.45 + rng() * 0.55;
+    const angle = (i / pointCount) * Math.PI * 2 + (rng() - 0.5) * 2.2;
+    const radius = 0.15 + rng() * 0.85;
     points.push({ x: Math.cos(angle) * radius, y: Math.sin(angle) * radius });
   }
   return points;
