@@ -5,8 +5,7 @@ import { Palette } from '@/constants/theme';
 export const authStyles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    justifyContent: 'flex-start',
-    paddingTop: 80,
+    justifyContent: 'center',
     paddingHorizontal: 20,
     ...(Platform.OS === 'web'
       ? ({ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 } as object)
