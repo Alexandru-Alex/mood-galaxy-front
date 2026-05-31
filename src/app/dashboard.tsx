@@ -14,6 +14,7 @@ import {
   constellationIdForEntry,
   generateConstellationShape,
   getConstellationCenter,
+  slotForEntry,
   starScreenPosition,
   type Point,
   type View as GalaxyView,
@@ -108,7 +109,9 @@ export default function DashboardScreen() {
   const center = getConstellationCenter(centerDate, startYear);
   const shape = generateConstellationShape(seed, cId);
   const allPositions: Point[] = shape.map((p) => starScreenPosition(center, p, view, SLOT_RADIUS));
-  const mascotPos: Point | null = entries.length < MAX_SLOTS ? allPositions[entries.length] : null;
+  const filledSlots = new Set(sorted.map((e) => slotForEntry(e.entryIndex)));
+  const nextSlot = Array.from({ length: MAX_SLOTS }, (_, i) => i).find((i) => !filledSlots.has(i));
+  const mascotPos: Point | null = nextSlot !== undefined ? allPositions[nextSlot] : null;
 
   return (
     <View style={styles.container}>
