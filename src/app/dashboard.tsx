@@ -1,4 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { type GestureResponderEvent, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +12,7 @@ import { styles } from '@/styles/dashboard.styles';
 const MAX_STARS = 7;
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [stars, setStars] = useState<StarPoint[]>([]);
 
@@ -54,6 +56,9 @@ export default function DashboardScreen() {
             <Text style={styles.resetText}>Reset</Text>
           </Pressable>
         )}
+        <Pressable style={styles.reset} onPress={() => router.push('/galaxy')}>
+          <Text style={styles.resetText}>Galaxy ✦</Text>
+        </Pressable>
       </View>
     </View>
   );
