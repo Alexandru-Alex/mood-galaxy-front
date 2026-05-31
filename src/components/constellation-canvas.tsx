@@ -32,7 +32,8 @@ function FilledStar({ x, y }: Point) {
   useEffect(() => {
     scale.value = withSpring(1, { damping: 8, stiffness: 120 });
     opacity.value = withTiming(1, { duration: 250 });
-  }, [scale, opacity]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const style = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -65,14 +66,14 @@ type Props = {
 
 export function ConstellationCanvas({ seed, entries, startYear, width, height }: Props) {
   const view: GalaxyView = { centerX: width / 2, centerY: height / 2, zoom: 1 };
-  const cId = entries.length > 0 ? constellationIdForEntry(entries[0].entryIndex) : 'c0';
-  const centerDate =
-    entries.length > 0 ? entries[0].date : new Date().toISOString().slice(0, 10);
+  const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
+  const cId = sorted.length > 0 ? constellationIdForEntry(sorted[0].entryIndex) : 'c0';
+  const centerDate = sorted.length > 0 ? sorted[0].date : new Date().toISOString().slice(0, 10);
 
   const center = getConstellationCenter(centerDate, startYear);
   const shape = generateConstellationShape(seed, cId);
   const allPositions = shape.map((p) => starScreenPosition(center, p, view, SLOT_RADIUS));
-  const filledSlots = new Set(entries.map((e) => slotForEntry(e.entryIndex)));
+  const filledSlots = new Set(sorted.map((e) => slotForEntry(e.entryIndex)));
   const filledPositions = allPositions.filter((_, i) => filledSlots.has(i));
 
   const ghostPoints = allPositions.map((p) => `${p.x},${p.y}`).join(' ');
