@@ -10,6 +10,24 @@ import { Starfield } from '@/components/starfield';
 import { Palette, Spacing } from '@/constants/theme';
 import { api, getStoredSeed } from '@/lib/api';
 
+function getFormattedDate(): string {
+  return new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+function getGreeting(displayName: string | null): string {
+  const hour = new Date().getHours();
+  let salutation: string;
+  if (hour >= 5 && hour < 12) salutation = 'Good morning';
+  else if (hour >= 12 && hour < 18) salutation = 'Good afternoon';
+  else if (hour >= 18 && hour < 22) salutation = 'Good evening';
+  else salutation = 'Good night';
+  return displayName ? `${salutation}, ${displayName}` : salutation;
+}
+
 const FALLBACK_SEED = 42;
 const START_YEAR = 2026;
 const MAX_SLOTS = 7;
