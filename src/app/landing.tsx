@@ -1,12 +1,11 @@
-import { Sora_700Bold, useFonts } from '@expo-google-fonts/sora';
 import * as Google from 'expo-auth-session/providers/google';
 import { makeRedirectUri } from 'expo-auth-session';
 import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
-import { useEffect, useState } from 'react';
-import { Platform, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Platform, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AuthModal } from '@/components/auth-modal';
@@ -18,6 +17,8 @@ import { SpaceBackground } from '@/components/space-background';
 import { StarCircle } from '@/components/star-circle';
 import { Starfield } from '@/components/starfield';
 import { ThemedText } from '@/components/themed-text';
+import { useAudio } from '@/context/audio-context';
+import { SoundIcon } from '@/components/sound-icon';
 import { api, getStoredToken, getPendingEmail, saveToken } from '@/lib/api';
 import { styles } from '@/styles/landing.styles';
 
@@ -30,10 +31,21 @@ const GOOGLE_CLIENT_IDS = {
 };
 
 export default function LandingScreen() {
-  const [fontsLoaded] = useFonts({ Sora_700Bold });
   const [authVisible, setAuthVisible] = useState(false);
+  const [authMounted, setAuthMounted] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
+  const { isMuted, toggleMute } = useAudio();
+  const [heavyReady, setHeavyReady] = useState(false);
+  const frameRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(null);
+
+  useEffect(() => {
+    // defer heavy SVG + starfield rendering until after first painted frame
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = requestAnimationFrame(() => setHeavyReady(true));
+    });
+    return () => { if (frameRef.current) cancelAnimationFrame(frameRef.current); };
+  }, []);
 
   const [googleRequest, googleResponse, googlePromptAsync] = Google.useAuthRequest({
     ...GOOGLE_CLIENT_IDS,
@@ -136,18 +148,25 @@ export default function LandingScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <SpaceBackground />
-      <Starfield />
+      {heavyReady && <Starfield />}
+      {Platform.OS !== 'web' && (
+        <Pressable style={styles.muteButton} onPress={toggleMute}>
+          <SoundIcon muted={isMuted} />
+        </Pressable>
+      )}
       <SafeAreaView style={styles.safeArea}>
         <StarCircle size={240} count={8}>
-          <Float amplitude={10} duration={2200}>
-            <AstronautLanding width={150} height={131} />
-          </Float>
+          {heavyReady && (
+            <Float amplitude={10} duration={2200}>
+              <AstronautLanding width={150} height={131} />
+            </Float>
+          )}
         </StarCircle>
 
         <View style={styles.header}>
           <ThemedText
             type="title"
-            style={[styles.title, !fontsLoaded && { fontFamily: undefined }]}>
+            style={styles.title}>
             Mood Galaxy
           </ThemedText>
           <Text style={styles.subtitle}>Your feelings, one star at a time</Text>
@@ -158,17 +177,19 @@ export default function LandingScreen() {
             onPress={handleGooglePress}
             disabled={googleLoading || (Platform.OS === 'web' && !googleRequest)}
           />
-          <EmailButton onPress={() => setAuthVisible(true)} />
+          <EmailButton onPress={() => { setAuthMounted(true); setAuthVisible(true); }} />
         </View>
 
         <Text style={styles.terms}>By continuing you agree to our Terms & Privacy Policy</Text>
       </SafeAreaView>
 
-      <AuthModal
-        visible={authVisible}
-        onClose={() => setAuthVisible(false)}
-        onSuccess={handleAuthSuccess}
-      />
+      {authMounted && (
+        <AuthModal
+          visible={authVisible}
+          onClose={() => setAuthVisible(false)}
+          onSuccess={handleAuthSuccess}
+        />
+      )}
     </View>
   );
 }
