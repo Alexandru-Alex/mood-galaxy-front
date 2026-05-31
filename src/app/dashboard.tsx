@@ -100,7 +100,7 @@ export default function DashboardScreen() {
     }
   };
 
-  const canAdd = entries.length < MAX_SLOTS && !submitting;
+  const canAdd = !submitting;
 
   const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
   const cId = sorted.length > 0 ? constellationIdForEntry(sorted[0].entryIndex) : 'c0';
@@ -157,13 +157,11 @@ export default function DashboardScreen() {
 
         <View style={styles.bottomArea} pointerEvents="box-none">
           <MoodPicker visible={pickerVisible} onSelect={handleMoodSelect} />
-          {canAdd && (
-            <Pressable
-              style={styles.addBtn}
-              onPress={() => setPickerVisible((v) => !v)}>
-              <Text style={styles.addBtnText}>+</Text>
-            </Pressable>
-          )}
+          <Pressable
+            style={[styles.addBtn, !canAdd && styles.addBtnDisabled]}
+            onPress={() => canAdd && setPickerVisible((v) => !v)}>
+            <Text style={styles.addBtnText}>+ Cum te simți</Text>
+          </Pressable>
         </View>
       </View>
     </View>
@@ -214,18 +212,22 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   addBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 32,
     backgroundColor: 'rgba(87, 74, 226, 0.85)',
     borderWidth: 1,
     borderColor: Palette.brightLavender,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  addBtnDisabled: {
+    opacity: 0.45,
+  },
   addBtnText: {
-    fontSize: 28,
+    fontSize: 16,
+    fontWeight: '700',
     color: '#ffffff',
-    lineHeight: 32,
+    letterSpacing: 0.3,
   },
 });
