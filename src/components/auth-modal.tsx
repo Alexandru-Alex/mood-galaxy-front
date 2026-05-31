@@ -19,6 +19,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { EyeIcon } from '@/components/eye-icon';
+import { LockIcon } from '@/components/lock-icon';
 import { MailIcon } from '@/components/mail-icon';
 import { Palette } from '@/constants/theme';
 import { api, BASE_URL, saveToken } from '@/lib/api';
@@ -186,6 +188,9 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
 
             {/* Password input */}
             <View style={[auth.inputWrap, passwordFocused && auth.inputWrapFocused]}>
+              <View style={auth.inputIcon}>
+                <LockIcon size={18} color={Palette.brightLavender} />
+              </View>
               <TextInput
                 style={auth.input}
                 placeholder="Password"
@@ -198,13 +203,16 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
                 autoCapitalize="none"
               />
               <Pressable onPress={() => setShowPassword(v => !v)} style={auth.eyeBtn}>
-                <Text style={auth.eyeText}>{showPassword ? '🙈' : '👁'}</Text>
+                <EyeIcon size={18} color={Palette.brightLavender} off={showPassword} />
               </Pressable>
             </View>
 
             {/* Confirm password (sign-up only) */}
             {mode === 'signup' && (
               <View style={[auth.inputWrap, confirmFocused && auth.inputWrapFocused]}>
+                <View style={auth.inputIcon}>
+                  <LockIcon size={18} color={Palette.brightLavender} />
+                </View>
                 <TextInput
                   style={auth.input}
                   placeholder="Confirm password"
@@ -217,7 +225,7 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
                   autoCapitalize="none"
                 />
                 <Pressable onPress={() => setShowConfirm(v => !v)} style={auth.eyeBtn}>
-                  <Text style={auth.eyeText}>{showConfirm ? '🙈' : '👁'}</Text>
+                  <EyeIcon size={18} color={Palette.brightLavender} off={showConfirm} />
                 </Pressable>
               </View>
             )}

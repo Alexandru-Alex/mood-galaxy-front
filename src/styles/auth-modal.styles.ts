@@ -92,6 +92,11 @@ export const authStyles = StyleSheet.create({
   },
   inputWrapFocused: {
     borderColor: Palette.brightLavender,
+    shadowColor: Palette.brightLavender,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 2,
   },
   inputIcon: {
     marginRight: 8,
@@ -100,13 +105,11 @@ export const authStyles = StyleSheet.create({
     flex: 1,
     color: '#f3eefb',
     fontSize: 15,
+    ...Platform.select({ web: { outlineStyle: 'none', outlineWidth: 0 } as object }),
   },
   eyeBtn: {
     padding: 4,
-  },
-  eyeText: {
-    color: Palette.brightLavender,
-    fontSize: 16,
+    marginLeft: 4,
   },
   error: {
     color: '#ff6b6b',
