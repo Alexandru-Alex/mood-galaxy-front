@@ -85,6 +85,7 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
     try {
       const { GoogleSignin } = require('@react-native-google-signin/google-signin');
       await GoogleSignin.hasPlayServices();
+      setLoading(false);
       // Close modal before native intent — RN Modal has higher Z-order than the account picker
       onClose();
       await new Promise(resolve => setTimeout(resolve, 150));
@@ -93,8 +94,8 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
       const tokens = await GoogleSignin.getTokens();
       await handleGoogleToken(tokens.accessToken);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Google sign-in failed. Try again.');
       setLoading(false);
+      setError(e instanceof Error ? e.message : 'Google sign-in failed. Try again.');
     }
   };
 
