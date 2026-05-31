@@ -20,7 +20,7 @@ import {
 import { getStoredSeed } from '@/lib/api';
 
 const START_YEAR = 2026;
-const SLOT_RADIUS = 28;
+const SLOT_RADIUS = 70;
 const FALLBACK_SEED = 42;
 
 const MOCK_ENTRIES: { date: string }[] = [
