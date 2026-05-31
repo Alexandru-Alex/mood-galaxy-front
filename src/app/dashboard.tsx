@@ -158,8 +158,9 @@ export default function DashboardScreen() {
         <View style={styles.bottomArea} pointerEvents="box-none">
           <MoodPicker visible={pickerVisible} onSelect={handleMoodSelect} />
           <Pressable
+            disabled={!canAdd}
             style={[styles.addBtn, !canAdd && styles.addBtnDisabled]}
-            onPress={() => canAdd && setPickerVisible((v) => !v)}>
+            onPress={() => setPickerVisible((v) => !v)}>
             <Text style={styles.addBtnText}>+ Cum te simți</Text>
           </Pressable>
         </View>
