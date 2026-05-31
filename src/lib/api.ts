@@ -36,16 +36,38 @@ export async function saveToken(token: string): Promise<void> {
   }
 }
 
+export async function saveGalaxySeed(seed: number): Promise<void> {
+  if (Platform.OS === 'web') {
+    localStorage.setItem('galaxy_seed', String(seed));
+  } else {
+    await SecureStore.setItemAsync('galaxy_seed', String(seed));
+  }
+}
+
+export async function getStoredSeed(): Promise<number | null> {
+  let raw: string | null = null;
+  if (Platform.OS === 'web') {
+    raw = localStorage.getItem('galaxy_seed');
+  } else {
+    raw = await SecureStore.getItemAsync('galaxy_seed');
+  }
+  if (raw === null) return null;
+  const n = parseInt(raw, 10);
+  return isNaN(n) ? null : n;
+}
+
 export async function logout(): Promise<void> {
   _tokenCache = null;
   if (Platform.OS === 'web') {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('is_new_user');
     localStorage.removeItem('pending_email');
+    localStorage.removeItem('galaxy_seed');
   } else {
     await SecureStore.deleteItemAsync('auth_token');
     await SecureStore.deleteItemAsync('is_new_user');
     await SecureStore.deleteItemAsync('pending_email');
+    await SecureStore.deleteItemAsync('galaxy_seed');
   }
 }
 
@@ -107,6 +129,23 @@ export const api = {
   async get<T = unknown>(path: string): Promise<T> {
     const headers = await buildHeaders();
     const res = await fetch(`${BASE_URL}${path}`, { headers });
+    if (!res.ok) return handleErrorResponse(res);
+    const text = await res.text();
+    if (!text) return undefined as T;
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      return text as T;
+    }
+  },
+
+  async patch<T = unknown>(path: string, body: unknown): Promise<T> {
+    const headers = await buildHeaders();
+    const res = await fetch(`${BASE_URL}${path}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(body),
+    });
     if (!res.ok) return handleErrorResponse(res);
     const text = await res.text();
     if (!text) return undefined as T;
