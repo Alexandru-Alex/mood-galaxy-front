@@ -117,8 +117,7 @@ type Props = {
   startYear: number;
   view: GalaxyView;
   scale: SharedValue<number>;
-  baseRadius?: number;
-  ringGap?: number;
+  centerOverride?: { angle: number; radius: number };
 };
 
 export function ConstellationGroup({
@@ -128,16 +127,12 @@ export function ConstellationGroup({
   startYear,
   view,
   scale,
-  baseRadius,
-  ringGap,
+  centerOverride,
 }: Props) {
   const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
   const centerDate = sorted.length > 0 ? sorted[0].date : new Date().toISOString().slice(0, 10);
 
-  const layoutOpts = baseRadius !== undefined || ringGap !== undefined
-    ? { baseRadius: baseRadius ?? 40, ringGap: ringGap ?? 90 }
-    : undefined;
-  const center = getConstellationCenter(centerDate, startYear, layoutOpts);
+  const center = centerOverride ?? getConstellationCenter(centerDate, startYear);
   const isComplete = sorted.length >= 7;
   const auraCx = view.centerX + Math.cos(center.angle) * center.radius * view.zoom;
   const auraCy = view.centerY + Math.sin(center.angle) * center.radius * view.zoom;

@@ -10,31 +10,54 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ConstellationGroup } from '@/components/constellation-group';
-import { getConstellationCenter } from '@/lib/galaxyPositioning';
 import type { Entry } from '@/lib/entries';
 
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 3.0;
-// Enough spacing so 12 constellations per ring don't overlap (SLOT_RADIUS=120 → footprint 240px)
 const GALAXY_BASE_RADIUS = 700;
 const GALAXY_RING_GAP = 350;
-// Render constellations this many px beyond the visible viewport edge
 const CULL_MARGIN = 300;
+const SECTOR_ANGLE = (Math.PI * 2) / 12; // 30° per month
 
 type CullState = { tx: number; ty: number; s: number };
+type GalaxyPos = { angle: number; radius: number; cx: number; cy: number };
 
-function constellationCanvasOffset(
-  date: string,
+// Assign non-overlapping positions by distributing same-month constellations
+// evenly within their 30° sector. Different years → different ring radii.
+function assignPositions(
+  groups: Map<string, Entry[]>,
   startYear: number,
-): { cx: number; cy: number } {
-  const center = getConstellationCenter(date, startYear, {
-    baseRadius: GALAXY_BASE_RADIUS,
-    ringGap: GALAXY_RING_GAP,
-  });
-  return {
-    cx: Math.cos(center.angle) * center.radius,
-    cy: Math.sin(center.angle) * center.radius,
-  };
+): Map<string, GalaxyPos> {
+  const byMonthYear = new Map<string, string[]>();
+  for (const [cId, entries] of groups) {
+    if (!entries[0]) continue;
+    const d = new Date(entries[0].date);
+    const key = `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
+    if (!byMonthYear.has(key)) byMonthYear.set(key, []);
+    byMonthYear.get(key)!.push(cId);
+  }
+
+  const positions = new Map<string, GalaxyPos>();
+  for (const [key, cIds] of byMonthYear) {
+    const [year, month] = key.split('-').map(Number);
+    const yearIndex = Math.max(0, year - startYear);
+    const baseAngle = -Math.PI / 2 + (month / 12) * Math.PI * 2;
+    const radius = GALAXY_BASE_RADIUS + yearIndex * GALAXY_RING_GAP;
+    const n = cIds.length;
+    cIds.forEach((cId, i) => {
+      // Spread within 70% of the sector so adjacent months don't bleed into each other
+      const angle = n === 1
+        ? baseAngle
+        : baseAngle - (SECTOR_ANGLE * 0.7) / 2 + (i / (n - 1)) * (SECTOR_ANGLE * 0.7);
+      positions.set(cId, {
+        angle,
+        radius,
+        cx: Math.cos(angle) * radius,
+        cy: Math.sin(angle) * radius,
+      });
+    });
+  }
+  return positions;
 }
 
 function isVisible(
@@ -77,19 +100,20 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
   const [cull, setCull] = useState<CullState>({ tx: 0, ty: 0, s: 1 });
   const hasCentered = useRef(false);
 
+  const positions = assignPositions(groups, startYear);
+
   // Center on the most recent constellation once groups load
   useEffect(() => {
-    if (hasCentered.current || groups.size === 0) return;
+    if (hasCentered.current || positions.size === 0) return;
     hasCentered.current = true;
-    const latestEntries = [...groups.values()].pop();
-    if (!latestEntries?.[0]) return;
-    const { cx, cy } = constellationCanvasOffset(latestEntries[0].date, startYear);
-    translateX.value = withSpring(-cx, { damping: 20, stiffness: 200 });
-    translateY.value = withSpring(-cy, { damping: 20, stiffness: 200 });
+    const latest = [...positions.values()].pop();
+    if (!latest) return;
+    translateX.value = withSpring(-latest.cx, { damping: 20, stiffness: 200 });
+    translateY.value = withSpring(-latest.cy, { damping: 20, stiffness: 200 });
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCull({ tx: -cx, ty: -cy, s: 1 });
+    setCull({ tx: -latest.cx, ty: -latest.cy, s: 1 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groups]);
+  }, [positions.size]);
 
   const updateCull = (tx: number, ty: number, s: number) => setCull({ tx, ty, s });
 
@@ -130,29 +154,21 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
   }));
 
   const recenter = () => {
-    const latestEntries = [...groups.values()].pop();
-    if (!latestEntries?.[0]) {
-      // eslint-disable-next-line react-hooks/immutability
-      translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
-      // eslint-disable-next-line react-hooks/immutability
-      translateY.value = withSpring(0, { damping: 20, stiffness: 200 });
-      // eslint-disable-next-line react-hooks/immutability
-      scale.value = withSpring(1, { damping: 20, stiffness: 200 });
-      setCull({ tx: 0, ty: 0, s: 1 });
-      return;
-    }
-    const { cx, cy } = constellationCanvasOffset(latestEntries[0].date, startYear);
-    translateX.value = withSpring(-cx, { damping: 20, stiffness: 200 });
-    translateY.value = withSpring(-cy, { damping: 20, stiffness: 200 });
+    const latest = [...positions.values()].pop();
+    if (!latest) return;
+    // eslint-disable-next-line react-hooks/immutability
+    translateX.value = withSpring(-latest.cx, { damping: 20, stiffness: 200 });
+    // eslint-disable-next-line react-hooks/immutability
+    translateY.value = withSpring(-latest.cy, { damping: 20, stiffness: 200 });
     scale.value = withSpring(1, { damping: 20, stiffness: 200 });
-    setCull({ tx: -cx, ty: -cy, s: 1 });
+    setCull({ tx: -latest.cx, ty: -latest.cy, s: 1 });
   };
 
   // Only render constellations within the visible viewport (+margin)
-  const visibleGroups = [...groups.entries()].filter(([, entries]) => {
-    if (!entries[0]) return false;
-    const { cx, cy } = constellationCanvasOffset(entries[0].date, startYear);
-    return isVisible(cx, cy, cull, width, height);
+  const visibleGroups = [...groups.entries()].filter(([cId]) => {
+    const pos = positions.get(cId);
+    if (!pos) return false;
+    return isVisible(pos.cx, pos.cy, cull, width, height);
   });
 
   return (
@@ -169,8 +185,7 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
                 startYear={startYear}
                 view={view}
                 scale={scale}
-                baseRadius={GALAXY_BASE_RADIUS}
-                ringGap={GALAXY_RING_GAP}
+                centerOverride={positions.get(cId)}
               />
             ))}
           </Animated.View>
