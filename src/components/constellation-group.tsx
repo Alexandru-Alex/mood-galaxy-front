@@ -286,13 +286,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: HALO,
     height: HALO,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   starContent: {
     ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   halo: {
     position: 'absolute',
@@ -304,6 +300,9 @@ const styles = StyleSheet.create({
     opacity: 0.25,
   },
   core: {
+    position: 'absolute',
+    left: (HALO - CORE) / 2,
+    top: (HALO - CORE) / 2,
     width: CORE,
     height: CORE,
     borderRadius: CORE / 2,
