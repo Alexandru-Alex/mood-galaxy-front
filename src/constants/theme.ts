@@ -27,7 +27,7 @@ export const Palette = {
 
 export type Mood = 'JOYFUL' | 'CALM' | 'NEUTRAL' | 'ANXIOUS' | 'SAD' | 'ANGRY';
 
-export const MoodColors: Record<Mood, string> = {
+export const MoodColors = {
   JOYFUL:  '#EF9F27',
   CALM:    '#4FB286',
   NEUTRAL: '#8B93B5',
