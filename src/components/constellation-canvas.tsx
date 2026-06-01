@@ -1,4 +1,5 @@
 import { StyleSheet, View } from 'react-native';
+import { useSharedValue } from 'react-native-reanimated';
 
 import { constellationIdForEntry } from '@/lib/galaxyPositioning';
 import type { Entry } from '@/lib/entries';
@@ -18,6 +19,8 @@ export function ConstellationCanvas({ seed, entries, startYear, width, height }:
   const view = { centerX: width / 2, centerY: height / 2, zoom: 1 };
   const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
   const cId = sorted.length > 0 ? constellationIdForEntry(sorted[0].entryIndex) : 'c0';
+  // Fixed scale — dashboard always shows full constellation, never minimized
+  const scale = useSharedValue(1);
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -29,6 +32,7 @@ export function ConstellationCanvas({ seed, entries, startYear, width, height }:
         view={view}
         canvasWidth={width}
         canvasHeight={height}
+        scale={scale}
       />
     </View>
   );
