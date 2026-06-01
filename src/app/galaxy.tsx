@@ -1,32 +1,45 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
-import { ConstellationCanvas, type Entry } from '@/components/constellation-canvas';
+import { GalaxyView } from '@/components/galaxy-view';
 import { SpaceBackground } from '@/components/space-background';
 import { Starfield } from '@/components/starfield';
-import { getStoredSeed } from '@/lib/api';
+import { api, getStoredSeed } from '@/lib/api';
+import { toEntries, type Entry } from '@/lib/entries';
+import { constellationIdForEntry } from '@/lib/galaxyPositioning';
+import type { BackendEntry } from '@/lib/types';
 
-const START_YEAR = 2026;
 const FALLBACK_SEED = 42;
+const START_YEAR = 2026;
 
-const MOCK_ENTRIES: Entry[] = [
-  { entryIndex: 0, date: '2026-01-03', mood: 'JOYFUL' },
-  { entryIndex: 1, date: '2026-01-07', mood: 'CALM' },
-  { entryIndex: 2, date: '2026-01-12', mood: 'NEUTRAL' },
-  { entryIndex: 3, date: '2026-01-18', mood: 'SAD' },
-  { entryIndex: 4, date: '2026-01-24', mood: 'ANGRY' },
-  { entryIndex: 5, date: '2026-02-02', mood: 'JOYFUL' },
-  { entryIndex: 6, date: '2026-02-09', mood: 'CALM' },
-];
+function groupByConstellation(entries: Entry[]): Map<string, Entry[]> {
+  const map = new Map<string, Entry[]>();
+  for (const e of entries) {
+    const cId = constellationIdForEntry(e.entryIndex);
+    if (!map.has(cId)) map.set(cId, []);
+    map.get(cId)!.push(e);
+  }
+  return map;
+}
 
 export default function GalaxyScreen() {
-  const { width, height } = useWindowDimensions();
   const [seed, setSeed] = useState(FALLBACK_SEED);
+  const [groups, setGroups] = useState<Map<string, Entry[]>>(new Map());
+  const [startYear, setStartYear] = useState(START_YEAR);
 
   useEffect(() => {
     getStoredSeed()
       .then((s) => { if (s !== null) setSeed(s); })
+      .catch(console.error);
+
+    api.get<BackendEntry[]>('/entries')
+      .then((data) => {
+        if (!Array.isArray(data)) return;
+        const all = toEntries(data);
+        if (all.length > 0) setStartYear(new Date(all[0].date).getUTCFullYear());
+        setGroups(groupByConstellation(all));
+      })
       .catch(console.error);
   }, []);
 
@@ -35,13 +48,7 @@ export default function GalaxyScreen() {
       <StatusBar style="light" />
       <SpaceBackground />
       <Starfield />
-      <ConstellationCanvas
-        seed={seed}
-        entries={MOCK_ENTRIES}
-        startYear={START_YEAR}
-        width={width}
-        height={height}
-      />
+      <GalaxyView seed={seed} groups={groups} startYear={startYear} />
     </View>
   );
 }
