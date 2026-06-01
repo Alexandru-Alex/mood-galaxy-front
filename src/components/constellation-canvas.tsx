@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, Polyline, RadialGradient, Stop } from 'react-native-svg';
 import Animated, {
@@ -75,9 +75,12 @@ function ConstellationAura({
   width: number;
   height: number;
 }) {
+  const gradientId = useRef(`constellation-aura-${Math.random().toString(36).slice(2)}`).current;
   const opacity = useSharedValue(0);
 
   useEffect(() => {
+    // ConstellationAura is only mounted when isComplete becomes true,
+    // so this empty-dep effect fires exactly once on constellation completion.
     opacity.value = withTiming(1, { duration: 1500 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -88,12 +91,12 @@ function ConstellationAura({
     <Animated.View style={[StyleSheet.absoluteFill, style]} pointerEvents="none">
       <Svg width={width} height={height}>
         <Defs>
-          <RadialGradient id="constellation-aura" cx="50%" cy="50%" r="50%">
+          <RadialGradient id={gradientId} cx="50%" cy="50%" r="50%" gradientUnits="objectBoundingBox">
             <Stop offset="0%" stopColor={color} stopOpacity="0.45" />
             <Stop offset="100%" stopColor={color} stopOpacity="0" />
           </RadialGradient>
         </Defs>
-        <Circle cx={cx} cy={cy} r={radius} fill="url(#constellation-aura)" />
+        <Circle cx={cx} cy={cy} r={radius} fill={`url(#${gradientId})`} />
       </Svg>
     </Animated.View>
   );
@@ -117,7 +120,7 @@ export function ConstellationCanvas({ seed, entries, startYear, width, height }:
   const isComplete = sorted.length >= 7;
   const auraCx = view.centerX + Math.cos(center.angle) * center.radius * view.zoom;
   const auraCy = view.centerY + Math.sin(center.angle) * center.radius * view.zoom;
-  const auraColor = isComplete ? blendMoodColors(sorted, MoodColors) : '#000000';
+  const auraColor = blendMoodColors(sorted, MoodColors);
   const shape = generateConstellationShape(seed, cId);
   const allPositions = shape.map((p) => starScreenPosition(center, p, view, SLOT_RADIUS));
   const filledSlots = new Set(sorted.map((e) => slotForEntry(e.entryIndex)));
