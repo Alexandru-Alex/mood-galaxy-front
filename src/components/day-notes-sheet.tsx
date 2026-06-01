@@ -20,7 +20,7 @@ type Props = {
 
 export function DayNotesSheet({ date, onClose }: Props) {
   const [notes, setNotes] = useState<JournalNoteResponse[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const backdropAnim = useRef(new RNAnimated.Value(0)).current;
   const sheetAnim = useRef(new RNAnimated.Value(400)).current;
 
@@ -28,6 +28,10 @@ export function DayNotesSheet({ date, onClose }: Props) {
 
   useEffect(() => {
     if (!visible) return;
+    backdropAnim.stopAnimation();
+    sheetAnim.stopAnimation();
+    backdropAnim.setValue(0);
+    sheetAnim.setValue(400);
     setLoading(true);
     setNotes([]);
     RNAnimated.parallel([
