@@ -10,6 +10,7 @@ import { Starfield } from '@/components/starfield';
 import { AstronautLanding } from '@/components/astronaut-landing';
 import { Palette, Spacing } from '@/constants/theme';
 import { api, getStoredSeed } from '@/lib/api';
+import type { BackendEntry } from '@/lib/types';
 import {
   constellationIdForEntry,
   generateConstellationShape,
@@ -44,9 +45,6 @@ type AccountDto = {
   displayName: string;
   isNotification: boolean;
 };
-
-// Backend shape from GET /entries/current (List<JournalEntryResponse>)
-type BackendEntry = { entryDate: string; mood: string; entryIndex?: number };
 
 const FALLBACK_SEED = 42;
 const START_YEAR = 2026;
@@ -183,7 +181,7 @@ export default function DashboardScreen() {
             disabled={!canAdd}
             style={[styles.addBtn, !canAdd && styles.addBtnDisabled]}
             onPress={() => setPickerVisible((v) => !v)}>
-            <Text style={styles.addBtnText}>+ Cum te simți</Text>
+            <Text style={styles.addBtnText}>+ How are you feeling</Text>
           </Pressable>
           <View style={styles.bottomNav}>
             <Pressable style={styles.navItem}>
