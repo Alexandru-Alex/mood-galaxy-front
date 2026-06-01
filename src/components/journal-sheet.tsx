@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
   withSpring,
 } from 'react-native-reanimated';
 import {
@@ -60,24 +61,26 @@ export const JournalSheet = forwardRef<BottomSheetModal, Props>(
       [],
     );
 
-    const handleSubmit = async () => {
+    const handleSubmit = useCallback(async () => {
       if (!selectedMood || submitting) return;
       setSubmitting(true);
       setError(null);
       try {
         await api.post<CreateJournalNoteResponse>('/journal', {
           mood: selectedMood,
-          content,
+          content: content.trim(),
         });
         const entries = await api.get<BackendEntry[]>('/entries/current');
         onSubmitSuccess(Array.isArray(entries) ? entries : []);
-        (ref as React.RefObject<BottomSheetModal>).current?.dismiss();
+        if (ref !== null && typeof ref !== 'function' && ref.current) {
+          ref.current.dismiss();
+        }
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : 'Something went wrong');
       } finally {
         setSubmitting(false);
       }
-    };
+    }, [selectedMood, submitting, content, onSubmitSuccess, ref]);
 
     return (
       <BottomSheetModal
@@ -156,9 +159,10 @@ function MoodCircle({
   }));
 
   const handlePress = () => {
-    scale.value = withSpring(1.15, { damping: 10, stiffness: 200 }, () => {
-      scale.value = withSpring(1, { damping: 10, stiffness: 200 });
-    });
+    scale.value = withSequence(
+      withSpring(1.15, { damping: 10, stiffness: 200 }),
+      withSpring(1,    { damping: 10, stiffness: 200 }),
+    );
     onPress();
   };
 
@@ -179,7 +183,7 @@ function MoodCircle({
 
 const styles = StyleSheet.create({
   background: {
-    backgroundColor: '#1a1438',
+    backgroundColor: '#1a1438', // deep space sheet surface, slightly lighter than bg #050410
     borderRadius: 24,
   },
   handle: {
