@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 import { ConstellationCanvas, type Entry } from '@/components/constellation-canvas';
-import { MoodPicker, type Mood } from '@/components/mood-picker';
+import { JournalSheet } from '@/components/journal-sheet';
 import { SpaceBackground } from '@/components/space-background';
 import { Starfield } from '@/components/starfield';
 import { AstronautLanding } from '@/components/astronaut-landing';
-import { Palette, Spacing } from '@/constants/theme';
+import { Palette, Spacing, type Mood } from '@/constants/theme';
 import { api, getStoredSeed } from '@/lib/api';
 import type { BackendEntry } from '@/lib/types';
 import {
@@ -58,15 +59,22 @@ const DEV_MOCK_ENTRIES: Entry[] = [
   { entryIndex: 3, date: '2026-01-18', mood: 'SAD' },
 ];
 
+function toEntries(data: BackendEntry[]): Entry[] {
+  return data.map((item, i) => ({
+    entryIndex: item.entryIndex ?? i,
+    date: item.entryDate,
+    mood: (item.mood as Mood) || 'NEUTRAL',
+  }));
+}
+
 export default function DashboardScreen() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [seed, setSeed] = useState(FALLBACK_SEED);
   const [entries, setEntries] = useState<Entry[]>(__DEV__ ? DEV_MOCK_ENTRIES : []);
   const [startYear, setStartYear] = useState(START_YEAR);
-  const [pickerVisible, setPickerVisible] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   useEffect(() => {
     getStoredSeed()
@@ -76,16 +84,8 @@ export default function DashboardScreen() {
     api.get<BackendEntry[]>('/entries/current')
       .then((data) => {
         if (!Array.isArray(data)) return;
-        setEntries(
-          data.map((item, i) => ({
-            entryIndex: item.entryIndex ?? i,
-            date: item.entryDate,
-            mood: (item.mood as Mood) || 'NEUTRAL',
-          })),
-        );
-        if (data.length > 0) {
-          setStartYear(new Date(data[0].entryDate).getUTCFullYear());
-        }
+        setEntries(toEntries(data));
+        if (data.length > 0) setStartYear(new Date(data[0].entryDate).getUTCFullYear());
       })
       .catch(console.error);
 
@@ -94,33 +94,10 @@ export default function DashboardScreen() {
       .catch(console.error);
   }, []);
 
-  const handleMoodSelect = async (mood: Mood) => {
-    setPickerVisible(false);
-    setSubmitting(true);
-    try {
-      await api.post('/entries', { mood });
-      const data = await api.get<BackendEntry[]>('/entries/current');
-      if (Array.isArray(data)) {
-        setEntries(
-          data.map((item, i) => ({
-            entryIndex: item.entryIndex ?? i,
-            date: item.entryDate,
-            mood: (item.mood as Mood) || 'NEUTRAL',
-          })),
-        );
-        if (data.length > 0) {
-          setStartYear(new Date(data[0].entryDate).getUTCFullYear());
-        }
-      }
-    } catch (e) {
-      console.error(e);
-      setPickerVisible(true);
-    } finally {
-      setSubmitting(false);
-    }
+  const handleSubmitSuccess = (data: BackendEntry[]) => {
+    setEntries(toEntries(data));
+    if (data.length > 0) setStartYear(new Date(data[0].entryDate).getUTCFullYear());
   };
-
-  const canAdd = !submitting;
 
   const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
   const cId = sorted.length > 0 ? constellationIdForEntry(sorted[0].entryIndex) : 'c0';
@@ -146,13 +123,6 @@ export default function DashboardScreen() {
         height={height}
       />
 
-      {pickerVisible && (
-        <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={() => setPickerVisible(false)}
-        />
-      )}
-
       <View
         style={[styles.hud, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}
         pointerEvents="box-none">
@@ -176,11 +146,9 @@ export default function DashboardScreen() {
         )}
 
         <View style={styles.bottomArea} pointerEvents="box-none">
-          <MoodPicker visible={pickerVisible} onSelect={handleMoodSelect} />
           <Pressable
-            disabled={!canAdd}
-            style={[styles.addBtn, !canAdd && styles.addBtnDisabled]}
-            onPress={() => setPickerVisible((v) => !v)}>
+            style={styles.addBtn}
+            onPress={() => bottomSheetRef.current?.present()}>
             <Text style={styles.addBtnText}>+ How are you feeling</Text>
           </Pressable>
           <View style={styles.bottomNav}>
@@ -196,6 +164,8 @@ export default function DashboardScreen() {
           </View>
         </View>
       </View>
+
+      <JournalSheet ref={bottomSheetRef} onSubmitSuccess={handleSubmitSuccess} />
     </View>
   );
 }
@@ -252,9 +222,6 @@ const styles = StyleSheet.create({
     borderColor: Palette.brightLavender,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  addBtnDisabled: {
-    opacity: 0.45,
   },
   addBtnText: {
     fontSize: 16,
