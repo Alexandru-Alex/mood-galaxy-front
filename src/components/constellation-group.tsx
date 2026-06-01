@@ -48,6 +48,15 @@ function FilledStar({ x, y, mood, onPress }: Point & { mood: Mood; onPress?: () 
     transform: [{ scale: scale.value }],
   }));
 
+  if (!onPress) {
+    return (
+      <Animated.View style={[styles.starWrap, { left: x - HALO / 2, top: y - HALO / 2 }, animStyle]}>
+        <View style={[styles.halo, { backgroundColor: color }]} />
+        <View style={[styles.core, { backgroundColor: color }]} />
+      </Animated.View>
+    );
+  }
+
   return (
     <Pressable
       style={[styles.starWrap, { left: x - HALO / 2, top: y - HALO / 2 }]}
@@ -260,7 +269,7 @@ export function ConstellationGroup({
             x={p.x}
             y={p.y}
             mood={slotMoodMap.get(i) ?? 'NEUTRAL'}
-            onPress={onStarPress ? () => onStarPress(slotDateMap.get(i) ?? '') : undefined}
+            onPress={onStarPress && slotDateMap.has(i) ? () => onStarPress(slotDateMap.get(i)!) : undefined}
           />
         ) : null,
       )}
