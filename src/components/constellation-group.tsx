@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, Polyline, RadialGradient, Stop } from 'react-native-svg';
 import Animated, {
   useAnimatedStyle,
@@ -32,7 +32,7 @@ const AURA_RADIUS = SLOT_RADIUS * 1.4;
 const DOT_RADIUS = 5;
 const DOT_AURA_RADIUS = 30;
 
-function FilledStar({ x, y, mood }: Point & { mood: Mood }) {
+function FilledStar({ x, y, mood, onPress }: Point & { mood: Mood; onPress?: () => void }) {
   const color = MoodColors[mood];
   const scale = useSharedValue(0.2);
   const opacity = useSharedValue(0);
@@ -43,16 +43,22 @@ function FilledStar({ x, y, mood }: Point & { mood: Mood }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const style = useAnimatedStyle(() => ({
+  const animStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
     transform: [{ scale: scale.value }],
   }));
 
   return (
-    <Animated.View style={[styles.starWrap, { left: x - HALO / 2, top: y - HALO / 2 }, style]}>
-      <View style={[styles.halo, { backgroundColor: color }]} />
-      <View style={[styles.core, { backgroundColor: color }]} />
-    </Animated.View>
+    <Pressable
+      style={[styles.starWrap, { left: x - HALO / 2, top: y - HALO / 2 }]}
+      onPress={onPress}
+      hitSlop={12}
+    >
+      <Animated.View style={[styles.starContent, animStyle]}>
+        <View style={[styles.halo, { backgroundColor: color }]} />
+        <View style={[styles.core, { backgroundColor: color }]} />
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -118,6 +124,7 @@ type Props = {
   view: GalaxyView;
   scale: SharedValue<number>;
   centerOverride?: { angle: number; radius: number };
+  onStarPress?: (date: string) => void;
 };
 
 export function ConstellationGroup({
@@ -128,6 +135,7 @@ export function ConstellationGroup({
   view,
   scale,
   centerOverride,
+  onStarPress,
 }: Props) {
   const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
   const centerDate = sorted.length > 0 ? sorted[0].date : new Date().toISOString().slice(0, 10);
@@ -141,6 +149,7 @@ export function ConstellationGroup({
   const allPositions = shape.map((p) => starScreenPosition(center, p, view, SLOT_RADIUS));
   const filledSlots = new Set(sorted.map((e) => slotForEntry(e.entryIndex)));
   const slotMoodMap = new Map(sorted.map((e) => [slotForEntry(e.entryIndex), e.mood]));
+  const slotDateMap = new Map(sorted.map((e) => [slotForEntry(e.entryIndex), e.date]));
   const filledPositions = allPositions.filter((_, i) => filledSlots.has(i));
 
   const ghostPoints = allPositions.map((p) => `${p.x},${p.y}`).join(' ');
@@ -175,7 +184,7 @@ export function ConstellationGroup({
   const dotGradientId = useRef(`dot-${Math.random().toString(36).slice(2)}`).current;
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <View style={StyleSheet.absoluteFill} pointerEvents={onStarPress ? 'box-none' : 'none'}>
       <Animated.View style={[StyleSheet.absoluteFill, dotStyle]} pointerEvents="none">
         <Animated.View
           style={[
@@ -201,7 +210,7 @@ export function ConstellationGroup({
           <View style={[styles.dotCore, { backgroundColor: auraColor }]} />
         </Animated.View>
       </Animated.View>
-      <Animated.View style={[StyleSheet.absoluteFill, fullStyle]} pointerEvents="none">
+      <Animated.View style={[StyleSheet.absoluteFill, fullStyle]} pointerEvents={onStarPress ? 'box-none' : 'none'}>
       {isComplete && (
         <ConstellationAura
           cx={auraCx}
@@ -246,7 +255,13 @@ export function ConstellationGroup({
       )}
       {allPositions.map((p, i) =>
         filledSlots.has(i) ? (
-          <FilledStar key={`f-${i}`} x={p.x} y={p.y} mood={slotMoodMap.get(i) ?? 'NEUTRAL'} />
+          <FilledStar
+            key={`f-${i}`}
+            x={p.x}
+            y={p.y}
+            mood={slotMoodMap.get(i) ?? 'NEUTRAL'}
+            onPress={onStarPress ? () => onStarPress(slotDateMap.get(i) ?? '') : undefined}
+          />
         ) : null,
       )}
       </Animated.View>
@@ -259,6 +274,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: HALO,
     height: HALO,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  starContent: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
   },
