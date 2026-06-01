@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   ActivityIndicator,
   Pressable,
@@ -19,31 +20,28 @@ type DayGroup = { date: string; notes: JournalNoteResponse[] };
 
 export default function JurnalScreen() {
   const insets = useSafeAreaInsets();
-  const [groups, setGroups] = useState<DayGroup[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchAllEntries()
-      .then((data) => {
-        const map = new Map<string, JournalNoteResponse[]>();
-        for (const note of data) {
-          if (!note?.createdAt) continue;
-          const date = note.createdAt.slice(0, 10);
-          if (!map.has(date)) map.set(date, []);
-          map.get(date)!.push(note);
-        }
-        for (const notes of map.values()) {
-          notes.sort((a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? ''));
-        }
-        const sorted = [...map.entries()]
-          .sort(([a], [b]) => b.localeCompare(a))
-          .map(([date, notes]) => ({ date, notes }));
-        setGroups(sorted);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: notes = [], isLoading: loading } = useQuery({
+    queryKey: ['notes'],
+    queryFn: fetchAllEntries,
+  });
+
+  const groups = useMemo<DayGroup[]>(() => {
+    const map = new Map<string, JournalNoteResponse[]>();
+    for (const note of notes) {
+      if (!note?.createdAt) continue;
+      const date = note.createdAt.slice(0, 10);
+      if (!map.has(date)) map.set(date, []);
+      map.get(date)!.push(note);
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? ''));
+    }
+    return [...map.entries()]
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([date, noteList]) => ({ date, notes: noteList }));
+  }, [notes]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
