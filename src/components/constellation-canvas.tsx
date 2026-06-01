@@ -8,8 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { MoodColors, Palette } from '@/constants/theme';
-import type { Mood } from '@/constants/theme';
+import { MoodColors, Palette, type Mood } from '@/constants/theme';
 import {
   constellationIdForEntry,
   generateConstellationShape,
@@ -20,7 +19,7 @@ import {
   type View as GalaxyView,
 } from '@/lib/galaxyPositioning';
 
-export type Entry = { entryIndex: number; date: string; mood: string };
+export type Entry = { entryIndex: number; date: string; mood: Mood };
 
 const SLOT_RADIUS = 120;
 const HALO = 22;
@@ -77,7 +76,7 @@ export function ConstellationCanvas({ seed, entries, startYear, width, height }:
   const allPositions = shape.map((p) => starScreenPosition(center, p, view, SLOT_RADIUS));
   const filledSlots = new Set(sorted.map((e) => slotForEntry(e.entryIndex)));
   const slotMoodMap = new Map(
-    sorted.map((e) => [slotForEntry(e.entryIndex), e.mood as Mood]),
+    sorted.map((e) => [slotForEntry(e.entryIndex), e.mood]),
   );
   const filledPositions = allPositions.filter((_, i) => filledSlots.has(i));
 
@@ -114,7 +113,7 @@ export function ConstellationCanvas({ seed, entries, startYear, width, height }:
       )}
       {allPositions.map((p, i) =>
         filledSlots.has(i) ? (
-          <FilledStar key={`f-${i}`} x={p.x} y={p.y} mood={slotMoodMap.get(i)!} />
+          <FilledStar key={`f-${i}`} x={p.x} y={p.y} mood={slotMoodMap.get(i) ?? 'NEUTRAL'} />
         ) : null,
       )}
     </View>

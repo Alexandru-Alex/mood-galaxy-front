@@ -45,6 +45,9 @@ type AccountDto = {
   isNotification: boolean;
 };
 
+// Backend shape from GET /entries/current (List<JournalEntryResponse>)
+type BackendEntry = { entryDate: string; mood: string; entryIndex?: number };
+
 const FALLBACK_SEED = 42;
 const START_YEAR = 2026;
 const MAX_SLOTS = 7;
@@ -72,10 +75,19 @@ export default function DashboardScreen() {
       .then((s) => { if (s !== null) setSeed(s); })
       .catch(console.error);
 
-    api.get<{ entries: Entry[]; startYear: number }>('/entries/current')
+    api.get<BackendEntry[]>('/entries/current')
       .then((data) => {
-        setEntries(data.entries);
-        setStartYear(data.startYear);
+        if (!Array.isArray(data)) return;
+        setEntries(
+          data.map((item, i) => ({
+            entryIndex: item.entryIndex ?? i,
+            date: item.entryDate,
+            mood: (item.mood as Mood) || 'NEUTRAL',
+          })),
+        );
+        if (data.length > 0) {
+          setStartYear(new Date(data[0].entryDate).getUTCFullYear());
+        }
       })
       .catch(console.error);
 
@@ -89,9 +101,19 @@ export default function DashboardScreen() {
     setSubmitting(true);
     try {
       await api.post('/entries', { mood });
-      const data = await api.get<{ entries: Entry[]; startYear: number }>('/entries/current');
-      setEntries(data.entries);
-      setStartYear(data.startYear);
+      const data = await api.get<BackendEntry[]>('/entries/current');
+      if (Array.isArray(data)) {
+        setEntries(
+          data.map((item, i) => ({
+            entryIndex: item.entryIndex ?? i,
+            date: item.entryDate,
+            mood: (item.mood as Mood) || 'NEUTRAL',
+          })),
+        );
+        if (data.length > 0) {
+          setStartYear(new Date(data[0].entryDate).getUTCFullYear());
+        }
+      }
     } catch (e) {
       console.error(e);
       setPickerVisible(true);
