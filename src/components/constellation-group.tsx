@@ -48,9 +48,12 @@ function FilledStar({ x, y, mood, onPress }: Point & { mood: Mood; onPress?: () 
     transform: [{ scale: scale.value }],
   }));
 
+  const lx = Math.round(x - HALO / 2);
+  const ly = Math.round(y - HALO / 2);
+
   if (!onPress) {
     return (
-      <Animated.View style={[styles.starWrap, { left: x - HALO / 2, top: y - HALO / 2 }, animStyle]}>
+      <Animated.View style={[styles.starWrap, { left: lx, top: ly }, animStyle]}>
         <View style={[styles.halo, { backgroundColor: color }]} />
         <View style={[styles.core, { backgroundColor: color }]} />
       </Animated.View>
@@ -59,7 +62,7 @@ function FilledStar({ x, y, mood, onPress }: Point & { mood: Mood; onPress?: () 
 
   return (
     <Pressable
-      style={[styles.starWrap, { left: x - HALO / 2, top: y - HALO / 2 }]}
+      style={[styles.starWrap, { left: lx, top: ly }]}
       onPress={onPress}
       hitSlop={12}
     >
@@ -73,7 +76,7 @@ function FilledStar({ x, y, mood, onPress }: Point & { mood: Mood; onPress?: () 
 
 function GhostStar({ x, y }: Point) {
   return (
-    <View style={[styles.starWrap, { left: x - HALO / 2, top: y - HALO / 2 }]}>
+    <View style={[styles.starWrap, { left: Math.round(x - HALO / 2), top: Math.round(y - HALO / 2) }]}>
       <View style={styles.ghost} />
     </View>
   );
