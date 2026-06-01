@@ -213,7 +213,7 @@ export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
             />
             <RNAnimated.View style={[styles.webSheet, { transform: [{ translateY: webSheetAnim }] }]}>
               <View style={styles.webHandle} />
-              <View style={styles.content}>
+              <View style={styles.webContent}>
                 {formContent(true)}
               </View>
             </RNAnimated.View>
@@ -394,6 +394,11 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     paddingBottom: Spacing.five,
     overflow: 'hidden',
+  },
+  webContent: {
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
+    paddingBottom: Spacing.five,
   },
   webHandle: {
     width: 40,
