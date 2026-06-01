@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { MoodColors, Palette, type Mood } from '@/constants/theme';
+import type { Entry } from '@/lib/entries';
 import {
   blendMoodColors,
   constellationIdForEntry,
@@ -20,7 +21,7 @@ import {
   type View as GalaxyView,
 } from '@/lib/galaxyPositioning';
 
-export type Entry = { entryIndex: number; date: string; mood: Mood };
+export type { Entry } from '@/lib/entries';
 
 const SLOT_RADIUS = 120;
 const HALO = 22;

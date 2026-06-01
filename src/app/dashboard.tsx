@@ -2,12 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ConstellationCanvas, type Entry } from '@/components/constellation-canvas';
+import { ConstellationCanvas } from '@/components/constellation-canvas';
+import { toEntries, type Entry } from '@/lib/entries';
 import { JournalSheet, type JournalSheetHandle } from '@/components/journal-sheet';
 import { SpaceBackground } from '@/components/space-background';
 import { Starfield } from '@/components/starfield';
 import { AstronautLanding } from '@/components/astronaut-landing';
-import { Palette, Spacing, type Mood } from '@/constants/theme';
+import { Palette, Spacing } from '@/constants/theme';
 import { api, getStoredSeed } from '@/lib/api';
 import type { BackendEntry } from '@/lib/types';
 import {
@@ -57,13 +58,6 @@ const DEV_MOCK_ENTRIES: Entry[] = [
   { entryIndex: 3, date: '2026-01-18', mood: 'SAD' },
 ];
 
-function toEntries(data: BackendEntry[]): Entry[] {
-  return data.map((item, i) => ({
-    entryIndex: item.entryIndex ?? i,
-    date: item.entryDate,
-    mood: (item.mood as Mood) || 'NEUTRAL',
-  }));
-}
 
 export default function DashboardScreen() {
   const { width, height } = useWindowDimensions();
