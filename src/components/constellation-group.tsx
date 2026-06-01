@@ -97,6 +97,8 @@ function ConstellationAura({
   );
 }
 
+const DOT_RADIUS = 5;
+
 type Props = {
   seed: number;
   constellationId: string;
@@ -105,6 +107,7 @@ type Props = {
   view: GalaxyView;
   canvasWidth: number;
   canvasHeight: number;
+  minimized?: boolean;
 };
 
 export function ConstellationGroup({
@@ -115,6 +118,7 @@ export function ConstellationGroup({
   view,
   canvasWidth,
   canvasHeight,
+  minimized = false,
 }: Props) {
   const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
   const centerDate = sorted.length > 0 ? sorted[0].date : new Date().toISOString().slice(0, 10);
@@ -132,6 +136,19 @@ export function ConstellationGroup({
 
   const ghostPoints = allPositions.map((p) => `${p.x},${p.y}`).join(' ');
   const solidPoints = filledPositions.map((p) => `${p.x},${p.y}`).join(' ');
+
+  if (minimized) {
+    return (
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <View
+          style={[
+            styles.dot,
+            { left: auraCx - DOT_RADIUS, top: auraCy - DOT_RADIUS, backgroundColor: auraColor },
+          ]}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -209,5 +226,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Palette.brightLavender,
     opacity: 0.4,
+  },
+  dot: {
+    position: 'absolute',
+    width: DOT_RADIUS * 2,
+    height: DOT_RADIUS * 2,
+    borderRadius: DOT_RADIUS,
   },
 });
