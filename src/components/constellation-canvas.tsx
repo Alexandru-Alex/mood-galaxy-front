@@ -8,7 +8,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { Palette } from '@/constants/theme';
+import { MoodColors, Palette } from '@/constants/theme';
+import type { Mood } from '@/constants/theme';
 import {
   constellationIdForEntry,
   generateConstellationShape,
@@ -25,7 +26,8 @@ const SLOT_RADIUS = 120;
 const HALO = 22;
 const CORE = 7;
 
-function FilledStar({ x, y }: Point) {
+function FilledStar({ x, y, mood }: Point & { mood: Mood }) {
+  const color = MoodColors[mood];
   const scale = useSharedValue(0.2);
   const opacity = useSharedValue(0);
 
@@ -42,8 +44,8 @@ function FilledStar({ x, y }: Point) {
 
   return (
     <Animated.View style={[styles.starWrap, { left: x - HALO / 2, top: y - HALO / 2 }, style]}>
-      <View style={styles.halo} />
-      <View style={styles.core} />
+      <View style={[styles.halo, { backgroundColor: color }]} />
+      <View style={[styles.core, { backgroundColor: color }]} />
     </Animated.View>
   );
 }
@@ -74,6 +76,9 @@ export function ConstellationCanvas({ seed, entries, startYear, width, height }:
   const shape = generateConstellationShape(seed, cId);
   const allPositions = shape.map((p) => starScreenPosition(center, p, view, SLOT_RADIUS));
   const filledSlots = new Set(sorted.map((e) => slotForEntry(e.entryIndex)));
+  const slotMoodMap = new Map(
+    sorted.map((e) => [slotForEntry(e.entryIndex), e.mood as Mood]),
+  );
   const filledPositions = allPositions.filter((_, i) => filledSlots.has(i));
 
   const ghostPoints = allPositions.map((p) => `${p.x},${p.y}`).join(' ');
@@ -108,7 +113,9 @@ export function ConstellationCanvas({ seed, entries, startYear, width, height }:
         filledSlots.has(i) ? null : <GhostStar key={i} x={p.x} y={p.y} />,
       )}
       {allPositions.map((p, i) =>
-        filledSlots.has(i) ? <FilledStar key={`f-${i}`} x={p.x} y={p.y} /> : null,
+        filledSlots.has(i) ? (
+          <FilledStar key={`f-${i}`} x={p.x} y={p.y} mood={slotMoodMap.get(i)!} />
+        ) : null,
       )}
     </View>
   );
@@ -129,14 +136,12 @@ const styles = StyleSheet.create({
     width: HALO,
     height: HALO,
     borderRadius: HALO / 2,
-    backgroundColor: Palette.brightLavender,
     opacity: 0.25,
   },
   core: {
     width: CORE,
     height: CORE,
     borderRadius: CORE / 2,
-    backgroundColor: '#ffffff',
   },
   ghost: {
     width: CORE,
