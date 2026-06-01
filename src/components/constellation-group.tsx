@@ -29,6 +29,8 @@ const SLOT_RADIUS = 120;
 const HALO = 22;
 const CORE = 7;
 const AURA_RADIUS = SLOT_RADIUS * 1.4;
+const DOT_RADIUS = 5;
+const DOT_AURA_RADIUS = 30;
 
 function FilledStar({ x, y, mood }: Point & { mood: Mood }) {
   const color = MoodColors[mood];
@@ -102,7 +104,6 @@ function ConstellationAura({
   );
 }
 
-const DOT_RADIUS = 5;
 const CONSTELLATION_FADE_OUT = [0.5, 0.65]; // scale range where constellation fades out
 const DOT_FADE_IN = [0.35, 0.5];            // scale range where dot fades in (after constellation gone)
 
@@ -170,16 +171,34 @@ export function ConstellationGroup({
     opacity: 0.5 + 0.5 / dotPulse.value,
   }));
 
+  const dotGradientId = useRef(`dot-${Math.random().toString(36).slice(2)}`).current;
+
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <Animated.View style={[StyleSheet.absoluteFill, dotStyle]} pointerEvents="none">
         <Animated.View
           style={[
-            styles.dot,
-            { left: auraCx - DOT_RADIUS, top: auraCy - DOT_RADIUS, backgroundColor: auraColor },
+            styles.dotContainer,
+            { left: auraCx - DOT_AURA_RADIUS, top: auraCy - DOT_AURA_RADIUS },
             dotPulseStyle,
           ]}
-        />
+        >
+          <Svg width={DOT_AURA_RADIUS * 2} height={DOT_AURA_RADIUS * 2}>
+            <Defs>
+              <RadialGradient id={dotGradientId} cx="50%" cy="50%" r="50%" gradientUnits="objectBoundingBox">
+                <Stop offset="0%" stopColor={auraColor} stopOpacity="0.55" />
+                <Stop offset="100%" stopColor={auraColor} stopOpacity="0" />
+              </RadialGradient>
+            </Defs>
+            <Circle
+              cx={DOT_AURA_RADIUS}
+              cy={DOT_AURA_RADIUS}
+              r={DOT_AURA_RADIUS}
+              fill={`url(#${dotGradientId})`}
+            />
+          </Svg>
+          <View style={[styles.dotCore, { backgroundColor: auraColor }]} />
+        </Animated.View>
       </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, fullStyle]} pointerEvents="none">
       {isComplete && (
@@ -258,7 +277,14 @@ const styles = StyleSheet.create({
     borderColor: Palette.brightLavender,
     opacity: 0.4,
   },
-  dot: {
+  dotContainer: {
+    position: 'absolute',
+    width: DOT_AURA_RADIUS * 2,
+    height: DOT_AURA_RADIUS * 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dotCore: {
     position: 'absolute',
     width: DOT_RADIUS * 2,
     height: DOT_RADIUS * 2,
