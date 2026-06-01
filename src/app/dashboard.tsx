@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ConstellationCanvas } from '@/components/constellation-canvas';
 import { toEntries, type Entry } from '@/lib/entries';
 import { JournalSheet, type JournalSheetHandle } from '@/components/journal-sheet';
+import { DayNotesSheet } from '@/components/day-notes-sheet';
 import { SpaceBackground } from '@/components/space-background';
 import { Starfield } from '@/components/starfield';
 import { AstronautLanding } from '@/components/astronaut-landing';
@@ -74,6 +75,7 @@ export default function DashboardScreen() {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const router = useRouter();
   const bottomSheetRef = useRef<JournalSheetHandle>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   useEffect(() => {
     getStoredSeed()
@@ -122,6 +124,7 @@ export default function DashboardScreen() {
         startYear={startYear}
         width={width}
         height={height}
+        onStarPress={setSelectedDate}
       />
 
       <View
@@ -167,6 +170,7 @@ export default function DashboardScreen() {
       </View>
 
       <JournalSheet ref={bottomSheetRef} onSubmitSuccess={handleSubmitSuccess} />
+      <DayNotesSheet date={selectedDate} onClose={() => setSelectedDate(null)} />
     </View>
   );
 }
