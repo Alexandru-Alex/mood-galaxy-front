@@ -147,6 +147,22 @@ export default function HomeScreen() {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const bottomSheetRef = useRef<JournalSheetHandle>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const mascotFloat = useSharedValue(0);
+  const mascotFloatStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: mascotFloat.value }],
+  }));
+
+  useEffect(() => {
+    mascotFloat.value = withRepeat(
+      withSequence(
+        withTiming(-8, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+      ),
+      -1,
+      false,
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const { data: backendEntries = [], isError: fetchError } = useQuery({
     queryKey: ['entries', 'current'],
     queryFn: () => api.get<BackendEntry[]>('/entries/current'),
@@ -210,12 +226,12 @@ export default function HomeScreen() {
         </View>
 
         {mascotPos && entries.length > 0 && !fetchError && (
-          <View
-            style={{ position: 'absolute', left: mascotPos.x - 30, top: mascotPos.y - 52 }}
+          <Animated.View
+            style={[{ position: 'absolute', left: mascotPos.x - 30, top: mascotPos.y - 52 }, mascotFloatStyle]}
             pointerEvents="none"
           >
             <AstronautConstellation width={60} height={60} />
-          </View>
+          </Animated.View>
         )}
 
         {fetchError && (
