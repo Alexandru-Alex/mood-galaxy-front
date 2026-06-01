@@ -95,7 +95,10 @@ async function handleErrorResponse(res: Response): Promise<never> {
 }
 
 async function buildHeaders(withAuth = true): Promise<Record<string, string>> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+  };
   if (withAuth) {
     const token = await getStoredToken();
     if (token) headers['Authorization'] = token;
