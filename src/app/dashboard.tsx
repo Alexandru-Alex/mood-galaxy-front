@@ -2,10 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
-
 import { ConstellationCanvas, type Entry } from '@/components/constellation-canvas';
-import { JournalSheet } from '@/components/journal-sheet';
+import { JournalSheet, type JournalSheetHandle } from '@/components/journal-sheet';
 import { SpaceBackground } from '@/components/space-background';
 import { Starfield } from '@/components/starfield';
 import { AstronautLanding } from '@/components/astronaut-landing';
@@ -74,7 +72,7 @@ export default function DashboardScreen() {
   const [entries, setEntries] = useState<Entry[]>(__DEV__ ? DEV_MOCK_ENTRIES : []);
   const [startYear, setStartYear] = useState(START_YEAR);
   const [displayName, setDisplayName] = useState<string | null>(null);
-  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const bottomSheetRef = useRef<JournalSheetHandle>(null);
 
   useEffect(() => {
     getStoredSeed()

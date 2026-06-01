@@ -1,5 +1,13 @@
-import React, { forwardRef, useCallback, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import {
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -30,23 +38,49 @@ type Props = {
   onSubmitSuccess: (entries: BackendEntry[]) => void;
 };
 
-export const JournalSheet = forwardRef<BottomSheetModal, Props>(
+export type JournalSheetHandle = {
+  present: () => void;
+  dismiss: () => void;
+};
+
+export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
   ({ onSubmitSuccess }, ref) => {
     const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
     const [content, setContent] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
+    const [webVisible, setWebVisible] = useState(false);
+    const sheetModalRef = useRef<BottomSheetModal>(null);
     const snapPoints = useMemo(() => ['62%'], []);
 
-    const handleSheetChange = useCallback((index: number) => {
-      if (index === -1) {
-        setSelectedMood(null);
-        setContent('');
-        setError(null);
-        setSubmitting(false);
-      }
+    const resetState = useCallback(() => {
+      setSelectedMood(null);
+      setContent('');
+      setError(null);
+      setSubmitting(false);
     }, []);
+
+    useImperativeHandle(ref, () => ({
+      present: () => {
+        if (Platform.OS === 'web') {
+          setWebVisible(true);
+        } else {
+          sheetModalRef.current?.present();
+        }
+      },
+      dismiss: () => {
+        if (Platform.OS === 'web') {
+          setWebVisible(false);
+          resetState();
+        } else {
+          sheetModalRef.current?.dismiss();
+        }
+      },
+    }), [resetState]);
+
+    const handleSheetChange = useCallback((index: number) => {
+      if (index === -1) resetState();
+    }, [resetState]);
 
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => (
@@ -72,46 +106,51 @@ export const JournalSheet = forwardRef<BottomSheetModal, Props>(
         });
         const entries = await api.get<BackendEntry[]>('/entries/current');
         onSubmitSuccess(Array.isArray(entries) ? entries : []);
-        if (ref !== null && typeof ref !== 'function' && ref.current) {
-          ref.current.dismiss();
+        if (Platform.OS === 'web') {
+          setWebVisible(false);
+          resetState();
+        } else {
+          sheetModalRef.current?.dismiss();
         }
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : 'Something went wrong');
       } finally {
         setSubmitting(false);
       }
-    }, [selectedMood, submitting, content, onSubmitSuccess, ref]);
+    }, [selectedMood, submitting, content, onSubmitSuccess, resetState]);
 
-    return (
-      <BottomSheetModal
-        ref={ref}
-        snapPoints={snapPoints}
-        enablePanDownToClose
-        backdropComponent={renderBackdrop}
-        backgroundStyle={styles.background}
-        handleIndicatorStyle={styles.handle}
-        onChange={handleSheetChange}
-      >
-        <View style={styles.content}>
-          <Text style={styles.title}>How are you feeling?</Text>
-          <Text style={styles.subtitle}>Choose a mood, then write your thought</Text>
+    const formContent = (isWeb: boolean) => (
+      <>
+        <Text style={styles.title}>How are you feeling?</Text>
+        <Text style={styles.subtitle}>Choose a mood, then write your thought</Text>
 
-          <Text style={styles.label}>MOOD</Text>
-          <View style={styles.moodRow}>
-            {MOODS.map(({ mood, label }) => (
-              <MoodCircle
-                key={mood}
-                mood={mood}
-                label={label}
-                selected={selectedMood === mood}
-                onPress={() => setSelectedMood(mood)}
-              />
-            ))}
-          </View>
+        <Text style={styles.label}>MOOD</Text>
+        <View style={styles.moodRow}>
+          {MOODS.map(({ mood, label }) => (
+            <MoodCircle
+              key={mood}
+              mood={mood}
+              label={label}
+              selected={selectedMood === mood}
+              onPress={() => setSelectedMood(mood)}
+            />
+          ))}
+        </View>
 
-          <Text style={styles.label}>
-            THOUGHT <Text style={styles.labelOptional}>(optional)</Text>
-          </Text>
+        <Text style={styles.label}>
+          THOUGHT <Text style={styles.labelOptional}>(optional)</Text>
+        </Text>
+        {isWeb ? (
+          <TextInput
+            style={styles.input}
+            placeholder="Write your thought..."
+            placeholderTextColor="rgba(171,129,205,0.45)"
+            value={content}
+            onChangeText={setContent}
+            multiline
+            numberOfLines={3}
+          />
+        ) : (
           <BottomSheetTextInput
             style={styles.input}
             placeholder="Write your thought..."
@@ -121,18 +160,58 @@ export const JournalSheet = forwardRef<BottomSheetModal, Props>(
             multiline
             numberOfLines={3}
           />
+        )}
 
-          {error !== null && <Text style={styles.error}>{error}</Text>}
+        {error !== null && <Text style={styles.error}>{error}</Text>}
 
-          <Pressable
-            style={[styles.submitBtn, (!selectedMood || submitting) && styles.submitBtnDisabled]}
-            onPress={handleSubmit}
-            disabled={!selectedMood || submitting}
-          >
-            <Text style={styles.submitBtnText}>
-              {submitting ? 'Adding...' : '✦ Add the star'}
-            </Text>
-          </Pressable>
+        <Pressable
+          style={[styles.submitBtn, (!selectedMood || submitting) && styles.submitBtnDisabled]}
+          onPress={handleSubmit}
+          disabled={!selectedMood || submitting}
+        >
+          <Text style={styles.submitBtnText}>
+            {submitting ? 'Adding...' : '✦ Add the star'}
+          </Text>
+        </Pressable>
+      </>
+    );
+
+    if (Platform.OS === 'web') {
+      return (
+        <Modal
+          visible={webVisible}
+          animationType="slide"
+          transparent
+          onRequestClose={() => { setWebVisible(false); resetState(); }}
+        >
+          <View style={styles.webBackdrop}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => { setWebVisible(false); resetState(); }}
+            />
+            <View style={styles.webSheet}>
+              <View style={styles.webHandle} />
+              <View style={styles.content}>
+                {formContent(true)}
+              </View>
+            </View>
+          </View>
+        </Modal>
+      );
+    }
+
+    return (
+      <BottomSheetModal
+        ref={sheetModalRef}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        backdropComponent={renderBackdrop}
+        backgroundStyle={styles.background}
+        handleIndicatorStyle={styles.handle}
+        onChange={handleSheetChange}
+      >
+        <View style={styles.content}>
+          {formContent(false)}
         </View>
       </BottomSheetModal>
     );
@@ -278,5 +357,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.3,
+  },
+  // web-only
+  webBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(5,4,16,0.6)',
+  },
+  webSheet: {
+    backgroundColor: '#1a1438',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: Spacing.five,
+  },
+  webHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: Palette.mauve,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 4,
   },
 });
