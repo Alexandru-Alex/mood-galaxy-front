@@ -7,9 +7,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { Palette, Spacing } from '@/constants/theme';
+import { Palette, Spacing, type Mood } from '@/constants/theme';
 
-export type Mood = 'JOYFUL' | 'CALM' | 'NEUTRAL' | 'ANXIOUS' | 'SAD' | 'ANGRY';
+export type { Mood };
 
 const MOODS: { mood: Mood; emoji: string; label: string }[] = [
   { mood: 'JOYFUL', emoji: '✦', label: 'Joyful' },
