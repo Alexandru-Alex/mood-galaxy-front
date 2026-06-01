@@ -59,7 +59,7 @@ export function DayNotesSheet({ date, onClose }: Props) {
   }, [backdropAnim, sheetAnim, onClose]);
 
   const formattedDate = date
-    ? new Date(date + 'T00:00:00').toLocaleDateString('ro-RO', {
+    ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
@@ -93,7 +93,7 @@ export function DayNotesSheet({ date, onClose }: Props) {
 
 function NoteItem({ note }: { note: JournalNoteResponse }) {
   const color = MoodColors[note.mood];
-  const time = new Date(note.createdAt).toLocaleTimeString('ro-RO', {
+  const time = new Date(note.createdAt).toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
   });

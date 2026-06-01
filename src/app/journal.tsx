@@ -67,7 +67,7 @@ export default function JournalScreen() {
           {groups.map(({ date, notes }) => (
             <View key={date} style={styles.group}>
               <Text style={styles.groupHeader}>
-                {new Date(date + 'T00:00:00').toLocaleDateString('ro-RO', {
+                {new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'long',
@@ -84,7 +84,7 @@ export default function JournalScreen() {
                   <View style={styles.noteContent}>
                     <Text style={styles.metaText}>
                       {note.mood.charAt(0) + note.mood.slice(1).toLowerCase()} ·{' '}
-                      {new Date(note.createdAt).toLocaleTimeString('ro-RO', {
+                      {new Date(note.createdAt).toLocaleTimeString('en-US', {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
