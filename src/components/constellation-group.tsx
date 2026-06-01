@@ -1,4 +1,4 @@
-import { useEffect, useId } from 'react';
+import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, Polyline, RadialGradient, Stop } from 'react-native-svg';
 import Animated, {
@@ -72,8 +72,7 @@ function ConstellationAura({
   canvasWidth: number;
   canvasHeight: number;
 }) {
-  const rawId = useId();
-  const gradientId = `aura-${rawId.replace(/:/g, '')}`;
+  const gradientId = useRef(`aura-${Math.random().toString(36).slice(2)}`).current;
   const opacity = useSharedValue(0);
 
   useEffect(() => {
