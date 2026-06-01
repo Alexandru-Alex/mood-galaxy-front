@@ -86,7 +86,9 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
 }
 
 /**
- * Returns a weighted-average hex color from entries, weighted by mood frequency.
+ * Returns the arithmetic mean hex color of all entries, weighted by mood
+ * frequency — each Entry in the array contributes once, so a mood appearing
+ * 5 times contributes 5× to the blend.
  * colorMap maps mood string → hex color (e.g. MoodColors from theme).
  * Falls back to '#808080' for unknown moods.
  */
@@ -105,5 +107,5 @@ export function blendMoodColors(
   }
   const n = entries.length;
   const toHex = (v: number) => Math.round(v / n).toString(16).padStart(2, '0');
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
 }
