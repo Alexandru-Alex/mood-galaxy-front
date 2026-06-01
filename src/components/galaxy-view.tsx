@@ -21,9 +21,10 @@ import type { Entry } from '@/lib/entries';
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 3.0;
 const GALAXY_BASE_RADIUS = 700;
-const GALAXY_RING_GAP = 350;
+const GALAXY_RING_GAP = 900;
+const CONSTELLATION_MIN_SPACING = 260; // px between centers (> constellation diameter ~240px)
+const GOLDEN_ANGLE = 2.39996; // ~137.5° — gives visually natural cluster rotations per month
 const CULL_MARGIN = 300;
-const SECTOR_ANGLE = (Math.PI * 2) / 12;
 // Must match constellation-group.tsx thresholds
 const DOT_FADE_IN = [0.35, 0.5] as const;
 const DOT_AURA_RADIUS = 30;
@@ -67,8 +68,9 @@ function MonthGroupOverlay({ data, scale }: { data: MonthGroupData; scale: Share
   );
 }
 
-// Assign non-overlapping positions by distributing same-month constellations
-// evenly within their 30° sector. Different years → different ring radii.
+// Same-month constellations arranged in a circle around the month's center point.
+// Circle radius is the minimum needed so no two constellation centers are closer
+// than CONSTELLATION_MIN_SPACING. Each month gets a stable rotation via golden angle.
 function assignPositions(
   groups: Map<string, Entry[]>,
   startYear: number,
@@ -87,20 +89,31 @@ function assignPositions(
     const [year, month] = key.split('-').map(Number);
     const yearIndex = Math.max(0, year - startYear);
     const baseAngle = -Math.PI / 2 + (month / 12) * Math.PI * 2;
-    const radius = GALAXY_BASE_RADIUS + yearIndex * GALAXY_RING_GAP;
+    const baseRadius = GALAXY_BASE_RADIUS + yearIndex * GALAXY_RING_GAP;
+    const ccx = Math.cos(baseAngle) * baseRadius;
+    const ccy = Math.sin(baseAngle) * baseRadius;
+
+    cIds.sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)));
     const n = cIds.length;
-    cIds.forEach((cId, i) => {
-      // Spread within 70% of the sector so adjacent months don't bleed into each other
-      const angle = n === 1
-        ? baseAngle
-        : baseAngle - (SECTOR_ANGLE * 0.7) / 2 + (i / (n - 1)) * (SECTOR_ANGLE * 0.7);
-      positions.set(cId, {
-        angle,
-        radius,
-        cx: Math.cos(angle) * radius,
-        cy: Math.sin(angle) * radius,
+
+    if (n === 1) {
+      positions.set(cIds[0], { angle: baseAngle, radius: baseRadius, cx: ccx, cy: ccy });
+    } else {
+      // Minimum circle radius so chord between adjacent points >= CONSTELLATION_MIN_SPACING
+      const clusterR = CONSTELLATION_MIN_SPACING / (2 * Math.sin(Math.PI / n));
+      const rotOffset = month * GOLDEN_ANGLE;
+      cIds.forEach((cId, i) => {
+        const a = rotOffset + (i / n) * Math.PI * 2;
+        const cx = ccx + Math.cos(a) * clusterR;
+        const cy = ccy + Math.sin(a) * clusterR;
+        positions.set(cId, {
+          angle: Math.atan2(cy, cx),
+          radius: Math.sqrt(cx * cx + cy * cy),
+          cx,
+          cy,
+        });
       });
-    });
+    }
   }
   return positions;
 }
@@ -141,6 +154,8 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
   const savedX = useSharedValue(0);
   const savedY = useSharedValue(0);
   const savedScale = useSharedValue(1);
+  const savedFocalX = useSharedValue(width / 2);
+  const savedFocalY = useSharedValue(height / 2);
 
   const [cull, setCull] = useState<CullState>({ tx: 0, ty: 0, s: 1 });
   const hasCentered = useRef(false);
@@ -192,6 +207,8 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
   const updateCull = (tx: number, ty: number, s: number) => setCull({ tx, ty, s });
 
   const pan = Gesture.Pan()
+    .minPointers(1)
+    .maxPointers(1)
     .onBegin(() => {
       savedX.value = translateX.value;
       savedY.value = translateY.value;
@@ -207,15 +224,37 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
     });
 
   const pinch = Gesture.Pinch()
-    .onBegin(() => {
+    .onBegin((e) => {
       savedScale.value = scale.value;
+      savedX.value = translateX.value;
+      savedY.value = translateY.value;
+      savedFocalX.value = e.focalX;
+      savedFocalY.value = e.focalY;
     })
     .onUpdate((e) => {
-      scale.value = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, savedScale.value * e.scale));
+      const newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, savedScale.value * e.scale));
+      // Galaxy point that was under the initial focal — keep it under e.focalX/Y
+      const gx = (savedFocalX.value - width / 2 - savedX.value) / savedScale.value;
+      const gy = (savedFocalY.value - height / 2 - savedY.value) / savedScale.value;
+      scale.value = newScale;
+      translateX.value = e.focalX - gx * newScale - width / 2;
+      translateY.value = e.focalY - gy * newScale - height / 2;
     })
     .onEnd(() => {
       runOnJS(updateCull)(translateX.value, translateY.value, scale.value);
     });
+
+  const zoomBy = (factor: number) => {
+    const current = scale.value;
+    const next = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, current * factor));
+    const actualFactor = next / current;
+    const newTx = translateX.value * actualFactor;
+    const newTy = translateY.value * actualFactor;
+    scale.value = withSpring(next, { damping: 18, stiffness: 180 });
+    translateX.value = withSpring(newTx, { damping: 18, stiffness: 180 });
+    translateY.value = withSpring(newTy, { damping: 18, stiffness: 180 });
+    setCull({ tx: newTx, ty: newTy, s: next });
+  };
 
   const composed = Gesture.Simultaneous(pan, pinch);
 
@@ -269,6 +308,14 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
           </Animated.View>
         </View>
       </GestureDetector>
+      <View style={[styles.zoomBtns, { bottom: insets.bottom + 24 }]}>
+        <Pressable style={styles.zoomBtn} onPress={() => zoomBy(1.5)}>
+          <Text style={styles.zoomIcon}>+</Text>
+        </Pressable>
+        <Pressable style={styles.zoomBtn} onPress={() => zoomBy(1 / 1.5)}>
+          <Text style={styles.zoomIcon}>−</Text>
+        </Pressable>
+      </View>
       <Pressable
         style={[styles.recenterBtn, { bottom: insets.bottom + 24 }]}
         onPress={recenter}
@@ -280,6 +327,26 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
 }
 
 const styles = StyleSheet.create({
+  zoomBtns: {
+    position: 'absolute',
+    left: 24,
+    gap: 10,
+  },
+  zoomBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(10, 8, 40, 0.75)',
+    borderWidth: 1,
+    borderColor: 'rgba(167, 139, 250, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  zoomIcon: {
+    fontSize: 22,
+    color: 'rgba(167, 139, 250, 0.9)',
+    lineHeight: 26,
+  },
   recenterBtn: {
     position: 'absolute',
     right: 24,

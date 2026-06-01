@@ -47,11 +47,11 @@ export function generateConstellationShape(
 }
 
 export function constellationIdForEntry(entryIndex: number): string {
-  return `c${Math.floor(entryIndex / 7)}`;
+  return `c${Math.floor((entryIndex - 1) / 7)}`;
 }
 
 export function slotForEntry(entryIndex: number): number {
-  return entryIndex % 7;
+  return (entryIndex - 1) % 7;
 }
 
 export function getConstellationCenter(

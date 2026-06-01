@@ -57,6 +57,11 @@ const DEV_MOCK_ENTRIES: Entry[] = [
   { entryIndex: 1, date: '2026-01-07', mood: 'CALM' },
   { entryIndex: 2, date: '2026-01-12', mood: 'NEUTRAL' },
   { entryIndex: 3, date: '2026-01-18', mood: 'SAD' },
+  { entryIndex: 4, date: '2026-01-22', mood: 'ANXIOUS' },
+  { entryIndex: 5, date: '2026-01-25', mood: 'CALM' },
+  { entryIndex: 6, date: '2026-01-28', mood: 'JOYFUL' },
+  // c1 starts here
+  { entryIndex: 7, date: '2026-02-03', mood: 'NEUTRAL' },
 ];
 
 
@@ -94,13 +99,15 @@ export default function DashboardScreen() {
   }, []);
 
   const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
-  const cId = sorted.length > 0 ? constellationIdForEntry(sorted[0].entryIndex) : 'c0';
-  const centerDate = sorted.length > 0 ? sorted[0].date : new Date().toISOString().slice(0, 10);
+  const lastEntry = sorted[sorted.length - 1];
+  const currentCId = lastEntry ? constellationIdForEntry(lastEntry.entryIndex) : 'c0';
+  const currentEntries = sorted.filter((e) => constellationIdForEntry(e.entryIndex) === currentCId);
+  const centerDate = currentEntries.length > 0 ? currentEntries[0].date : new Date().toISOString().slice(0, 10);
   const view: GalaxyView = { centerX: width / 2, centerY: height / 2, zoom: 1 };
   const center = getConstellationCenter(centerDate, startYear);
-  const shape = generateConstellationShape(seed, cId);
+  const shape = generateConstellationShape(seed, currentCId);
   const allPositions: Point[] = shape.map((p) => starScreenPosition(center, p, view, SLOT_RADIUS));
-  const filledSlots = new Set(sorted.map((e) => slotForEntry(e.entryIndex)));
+  const filledSlots = new Set(currentEntries.map((e) => slotForEntry(e.entryIndex)));
   const nextSlot = Array.from({ length: MAX_SLOTS }, (_, i) => i).find((i) => !filledSlots.has(i));
   const mascotPos: Point | null = nextSlot !== undefined ? allPositions[nextSlot] : null;
 
@@ -126,7 +133,7 @@ export default function DashboardScreen() {
             <Text style={styles.greetingText}>{getGreeting(displayName)}</Text>
           </View>
           <Text style={styles.progressText}>
-            {entries.length >= MAX_SLOTS ? 'Constellation complete ✦' : `${entries.length} / ${MAX_SLOTS} ★`}
+            {currentEntries.length >= MAX_SLOTS ? 'Constellation complete ✦' : `${currentEntries.length} / ${MAX_SLOTS} ★`}
           </Text>
         </View>
 
