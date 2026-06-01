@@ -362,9 +362,12 @@ const styles = StyleSheet.create({
   webBackdrop: {
     flex: 1,
     justifyContent: 'flex-end',
+    alignItems: 'center',
     backgroundColor: 'rgba(5,4,16,0.6)',
   },
   webSheet: {
+    width: '100%',
+    maxWidth: 480,
     backgroundColor: '#1a1438',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
