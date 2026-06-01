@@ -79,3 +79,31 @@ export function starScreenPosition(
     y: cy + shapePoint.y * slotRadius * view.zoom,
   };
 }
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const n = parseInt(hex.slice(1), 16);
+  return { r: (n >> 16) & 0xff, g: (n >> 8) & 0xff, b: n & 0xff };
+}
+
+/**
+ * Returns a weighted-average hex color from entries, weighted by mood frequency.
+ * colorMap maps mood string → hex color (e.g. MoodColors from theme).
+ * Falls back to '#808080' for unknown moods.
+ */
+export function blendMoodColors(
+  entries: { mood: string }[],
+  colorMap: Record<string, string>,
+): string {
+  if (entries.length === 0) return '#ffffff';
+  let r = 0, g = 0, b = 0;
+  for (const entry of entries) {
+    const hex = colorMap[entry.mood] ?? '#808080';
+    const rgb = hexToRgb(hex);
+    r += rgb.r;
+    g += rgb.g;
+    b += rgb.b;
+  }
+  const n = entries.length;
+  const toHex = (v: number) => Math.round(v / n).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
