@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -6,10 +6,16 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   runOnJS,
+  interpolate,
+  Extrapolation,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
 import { ConstellationGroup } from '@/components/constellation-group';
+import { MoodColors } from '@/constants/theme';
+import { blendMoodColors } from '@/lib/galaxyPositioning';
 import type { Entry } from '@/lib/entries';
 
 const MIN_ZOOM = 0.3;
@@ -17,10 +23,49 @@ const MAX_ZOOM = 3.0;
 const GALAXY_BASE_RADIUS = 700;
 const GALAXY_RING_GAP = 350;
 const CULL_MARGIN = 300;
-const SECTOR_ANGLE = (Math.PI * 2) / 12; // 30° per month
+const SECTOR_ANGLE = (Math.PI * 2) / 12;
+// Must match constellation-group.tsx thresholds
+const DOT_FADE_IN = [0.35, 0.5] as const;
+const DOT_AURA_RADIUS = 30;
 
 type CullState = { tx: number; ty: number; s: number };
 type GalaxyPos = { angle: number; radius: number; cx: number; cy: number };
+type MonthGroupData = { key: string; label: string; cx: number; cy: number; color: string; auraRadius: number };
+
+function MonthGroupOverlay({ data, scale }: { data: MonthGroupData; scale: SharedValue<number> }) {
+  const gradientId = useRef(`mg-${Math.random().toString(36).slice(2)}`).current;
+  const fadeStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scale.value, DOT_FADE_IN, [1, 0], Extrapolation.CLAMP),
+  }));
+  const { cx, cy, color, auraRadius, label } = data;
+  const svgSize = auraRadius * 2;
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, fadeStyle]} pointerEvents="none">
+      <Svg
+        width={svgSize}
+        height={svgSize}
+        style={{ position: 'absolute', left: cx - auraRadius, top: cy - auraRadius }}
+      >
+        <Defs>
+          <RadialGradient id={gradientId} cx="50%" cy="50%" r="50%" gradientUnits="objectBoundingBox">
+            <Stop offset="0%" stopColor={color} stopOpacity="0.3" />
+            <Stop offset="70%" stopColor={color} stopOpacity="0.08" />
+            <Stop offset="100%" stopColor={color} stopOpacity="0" />
+          </RadialGradient>
+        </Defs>
+        <Circle cx={auraRadius} cy={auraRadius} r={auraRadius} fill={`url(#${gradientId})`} />
+      </Svg>
+      <Text
+        style={[
+          styles.monthLabel,
+          { position: 'absolute', left: cx - 60, top: cy + auraRadius + 6, width: 120 },
+        ]}
+      >
+        {label}
+      </Text>
+    </Animated.View>
+  );
+}
 
 // Assign non-overlapping positions by distributing same-month constellations
 // evenly within their 30° sector. Different years → different ring radii.
@@ -100,7 +145,33 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
   const [cull, setCull] = useState<CullState>({ tx: 0, ty: 0, s: 1 });
   const hasCentered = useRef(false);
 
-  const positions = assignPositions(groups, startYear);
+  const positions = useMemo(() => assignPositions(groups, startYear), [groups, startYear]);
+
+  const monthGroups = useMemo<MonthGroupData[]>(() => {
+    const byKey = new Map<string, string[]>();
+    for (const [cId, pos] of positions) {
+      const entries = groups.get(cId);
+      if (!entries?.[0]) continue;
+      const d = new Date(entries[0].date);
+      const key = `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
+      if (!byKey.has(key)) byKey.set(key, []);
+      byKey.get(key)!.push(cId);
+    }
+    return [...byKey.entries()].map(([key, cIds]) => {
+      const poses = cIds.map(cId => positions.get(cId)!).filter(Boolean);
+      const cx = poses.reduce((s, p) => s + p.cx, 0) / poses.length;
+      const cy = poses.reduce((s, p) => s + p.cy, 0) / poses.length;
+      const allEntries = cIds.flatMap(cId => groups.get(cId) ?? []);
+      const color = blendMoodColors(allEntries, MoodColors);
+      const maxDist = poses.length > 1
+        ? Math.max(...poses.map(p => Math.hypot(p.cx - cx, p.cy - cy)))
+        : 0;
+      const auraRadius = maxDist + DOT_AURA_RADIUS * 3;
+      const [year, month] = key.split('-').map(Number);
+      const label = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      return { key, label, cx, cy, color, auraRadius };
+    });
+  }, [positions, groups]);
 
   // Center on the most recent constellation once groups load
   useEffect(() => {
@@ -160,6 +231,7 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
     translateX.value = withSpring(-latest.cx, { damping: 20, stiffness: 200 });
     // eslint-disable-next-line react-hooks/immutability
     translateY.value = withSpring(-latest.cy, { damping: 20, stiffness: 200 });
+    // eslint-disable-next-line react-hooks/immutability
     scale.value = withSpring(1, { damping: 20, stiffness: 200 });
     setCull({ tx: -latest.cx, ty: -latest.cy, s: 1 });
   };
@@ -176,6 +248,9 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
       <GestureDetector gesture={composed}>
         <View style={StyleSheet.absoluteFill}>
           <Animated.View style={[StyleSheet.absoluteFill, animatedStyle]}>
+            {monthGroups.map(data => (
+              <MonthGroupOverlay key={data.key} data={data} scale={scale} />
+            ))}
             {visibleGroups.map(([cId, entries]) => (
               <ConstellationGroup
                 key={cId}
@@ -217,5 +292,12 @@ const styles = StyleSheet.create({
   recenterIcon: {
     fontSize: 20,
     color: 'rgba(167, 139, 250, 0.9)',
+  },
+  monthLabel: {
+    fontSize: 36,
+    fontWeight: '300',
+    color: 'rgba(255, 255, 255, 0.45)',
+    textAlign: 'center',
+    letterSpacing: 1,
   },
 });
