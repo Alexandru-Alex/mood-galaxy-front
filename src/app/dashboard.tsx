@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -94,10 +94,10 @@ export default function DashboardScreen() {
       .catch(console.error);
   }, []);
 
-  const handleSubmitSuccess = (data: BackendEntry[]) => {
+  const handleSubmitSuccess = useCallback((data: BackendEntry[]) => {
     setEntries(toEntries(data));
     if (data.length > 0) setStartYear(new Date(data[0].entryDate).getUTCFullYear());
-  };
+  }, []);
 
   const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
   const cId = sorted.length > 0 ? constellationIdForEntry(sorted[0].entryIndex) : 'c0';
