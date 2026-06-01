@@ -15,10 +15,9 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { MoodColors, Palette, Spacing, type Mood } from '@/constants/theme';
 import { api } from '@/lib/api';
-import type { CreateJournalNoteResponse } from '@/lib/types';
+import type { BackendEntry, CreateJournalNoteResponse } from '@/lib/types';
 
 const MOODS: { mood: Mood; label: string }[] = [
   { mood: 'JOYFUL', label: 'Joyful' },
@@ -29,7 +28,9 @@ const MOODS: { mood: Mood; label: string }[] = [
   { mood: 'ANGRY', label: 'Angry' },
 ];
 
-type Props = Record<string, never>;
+type Props = {
+  onSubmitSuccess: (entries: BackendEntry[]) => void;
+};
 
 export type JournalSheetHandle = {
   present: () => void;
@@ -37,13 +38,12 @@ export type JournalSheetHandle = {
 };
 
 export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
-  (_props, ref) => {
+  ({ onSubmitSuccess }, ref) => {
     const [visible, setVisible] = useState(false);
     const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
     const [content, setContent] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const queryClient = useQueryClient();
     const backdropAnim = useRef(new RNAnimated.Value(0)).current;
     const sheetAnim = useRef(new RNAnimated.Value(40)).current;
 
@@ -88,15 +88,15 @@ export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
           mood: selectedMood,
           content: content.trim(),
         });
-        await queryClient.invalidateQueries({ queryKey: ['entries', 'current'] });
-        await queryClient.invalidateQueries({ queryKey: ['notes'] });
+        const entries = await api.get<BackendEntry[]>('/entries/current');
+        onSubmitSuccess(Array.isArray(entries) ? entries : []);
         close(() => resetState());
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : 'Something went wrong');
       } finally {
         setSubmitting(false);
       }
-    }, [selectedMood, submitting, content, queryClient, close, resetState]);
+    }, [selectedMood, submitting, content, onSubmitSuccess, close, resetState]);
 
     return (
       <Modal

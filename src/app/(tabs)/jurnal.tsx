@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -22,10 +21,15 @@ export default function JurnalScreen() {
   const insets = useSafeAreaInsets();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  const { data: notes = [], isLoading: loading } = useQuery({
-    queryKey: ['notes'],
-    queryFn: fetchAllEntries,
-  });
+  const [notes, setNotes] = useState<JournalNoteResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAllEntries()
+      .then(setNotes)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
 
   const groups = useMemo<DayGroup[]>(() => {
     const map = new Map<string, JournalNoteResponse[]>();
