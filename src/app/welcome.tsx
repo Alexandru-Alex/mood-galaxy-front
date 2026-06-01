@@ -32,7 +32,7 @@ export default function WelcomeScreen() {
   }, []);
 
   if (isNewUser === undefined) return null;
-  if (!isNewUser) return <Redirect href="/dashboard" />;
+  if (!isNewUser) return <Redirect href="/" />;
 
   const canContinue = name.trim().length > 0;
 
@@ -46,7 +46,7 @@ export default function WelcomeScreen() {
       } else {
         await SecureStore.setItemAsync('is_new_user', 'false');
       }
-      router.replace('/dashboard');
+      router.replace('/');
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Something went wrong');
     } finally {

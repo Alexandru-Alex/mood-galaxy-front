@@ -65,7 +65,7 @@ export default function LandingScreen() {
         Platform.OS === 'web'
           ? localStorage.getItem('is_new_user')
           : await SecureStore.getItemAsync('is_new_user');
-      router.replace(isNew === 'true' ? '/welcome' : '/dashboard');
+      router.replace(isNew === 'true' ? '/welcome' : '/');
     });
   }, []);
 
@@ -104,7 +104,7 @@ export default function LandingScreen() {
       } else {
         await SecureStore.setItemAsync('is_new_user', String(data.newUser));
       }
-      router.replace(data.newUser ? '/welcome' : '/dashboard');
+      router.replace(data.newUser ? '/welcome' : '/');
     } catch (e: unknown) {
       console.error('Google auth error:', e);
     } finally {
@@ -141,7 +141,7 @@ export default function LandingScreen() {
     if (!emailVerified) {
       router.replace('/pending-verification');
     } else {
-      router.replace(newUser ? '/welcome' : '/dashboard');
+      router.replace(newUser ? '/welcome' : '/');
     }
   };
 
