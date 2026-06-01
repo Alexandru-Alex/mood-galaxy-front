@@ -1,10 +1,8 @@
 import { Sora_700Bold, useFonts } from '@expo-google-fonts/sora';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AudioProvider } from '@/context/audio-context';
@@ -39,24 +37,20 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <AudioProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <AuthGuard />
-            <AnimatedSplashOverlay />
-            <Stack initialRouteName="landing" screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="landing" />
-              <Stack.Screen name="welcome" />
-              <Stack.Screen name="dashboard" />
-              <Stack.Screen name="pending-verification" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="galaxy" />
-              <Stack.Screen name="auth" />
-            </Stack>
-          </ThemeProvider>
-        </AudioProvider>
-      </BottomSheetModalProvider>
-    </GestureHandlerRootView>
+    <AudioProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <AuthGuard />
+        <AnimatedSplashOverlay />
+        <Stack initialRouteName="landing" screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="landing" />
+          <Stack.Screen name="welcome" />
+          <Stack.Screen name="dashboard" />
+          <Stack.Screen name="pending-verification" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="galaxy" />
+          <Stack.Screen name="auth" />
+        </Stack>
+      </ThemeProvider>
+    </AudioProvider>
   );
 }
