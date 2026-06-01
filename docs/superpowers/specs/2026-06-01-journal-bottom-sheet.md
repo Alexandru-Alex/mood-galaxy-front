@@ -55,10 +55,17 @@ POST /journal
 Body: { mood: Mood, content: string }
 ```
 
+POST response shape:
+```ts
+type CreateJournalNoteResponse = { id: string; createdAt: string };
+```
+The response is used only to confirm success (id/createdAt are not stored). Because it lacks `mood` and `entryIndex`, a follow-up fetch is required.
+
 On success:
-1. `GET /entries/current` to fetch refreshed entries
-2. Call `onSubmitSuccess(entries)`
-3. `bottomSheetRef.current?.dismiss()`
+1. Receive `CreateJournalNoteResponse` (confirms the entry was created)
+2. `GET /entries/current` to fetch the full refreshed entry list (needed for `entryIndex` + `mood`)
+3. Call `onSubmitSuccess(entries)`
+4. `bottomSheetRef.current?.dismiss()`
 
 On error: set `error` state with the error message, do not dismiss.
 
