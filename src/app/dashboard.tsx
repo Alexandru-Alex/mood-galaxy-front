@@ -162,7 +162,7 @@ export default function DashboardScreen() {
             <Pressable style={styles.navItem} onPress={() => router.push('/galaxy')}>
               <Text style={[styles.navIcon, { color: Palette.brightLavender }]}>◎</Text>
             </Pressable>
-            <Pressable style={styles.navItem}>
+            <Pressable style={styles.navItem} onPress={() => router.push('/journal')}>
               <Text style={[styles.navIcon, { color: Palette.brightLavender }]}>◉</Text>
             </Pressable>
           </View>
