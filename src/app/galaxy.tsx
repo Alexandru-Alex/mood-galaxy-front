@@ -8,7 +8,7 @@ import { Starfield } from '@/components/starfield';
 import { api, getStoredSeed } from '@/lib/api';
 import { toEntries, type Entry } from '@/lib/entries';
 import { constellationIdForEntry } from '@/lib/galaxyPositioning';
-import type { BackendEntry } from '@/lib/types';
+import type { BackendEntry, PageResponse } from '@/lib/types';
 
 const FALLBACK_SEED = 42;
 const START_YEAR = 2026;
@@ -33,14 +33,18 @@ export default function GalaxyScreen() {
       .then((s) => { if (s !== null) setSeed(s); })
       .catch(console.error);
 
-    api.get<BackendEntry[]>('/entries')
-      .then((data) => {
-        if (!Array.isArray(data)) return;
-        const all = toEntries(data);
-        if (all.length > 0) setStartYear(new Date(all[0].date).getUTCFullYear());
-        setGroups(groupByConstellation(all));
-      })
-      .catch(console.error);
+    (async () => {
+      const collected: BackendEntry[] = [];
+      const first = await api.get<PageResponse<BackendEntry>>('/entries?page=0&size=50');
+      collected.push(...first.content);
+      for (let p = 1; p < first.totalPages; p++) {
+        const res = await api.get<PageResponse<BackendEntry>>(`/entries?page=${p}&size=50`);
+        collected.push(...res.content);
+      }
+      const all = toEntries(collected);
+      if (all.length > 0) setStartYear(new Date(all[0].date).getUTCFullYear());
+      setGroups(groupByConstellation(all));
+    })().catch(console.error);
   }, []);
 
   return (
