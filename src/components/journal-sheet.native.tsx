@@ -1,19 +1,17 @@
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import {
-  Animated as RNAnimated,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import React, { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSequence,
   withSpring,
 } from 'react-native-reanimated';
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetTextInput,
+  type BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
 
 import { MoodColors, Palette, Spacing, type Mood } from '@/constants/theme';
 import { api } from '@/lib/api';
@@ -39,13 +37,17 @@ export type JournalSheetHandle = {
 
 export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
   ({ onSubmitSuccess }, ref) => {
-    const [visible, setVisible] = useState(false);
     const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
     const [content, setContent] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const backdropAnim = useRef(new RNAnimated.Value(0)).current;
-    const sheetAnim = useRef(new RNAnimated.Value(40)).current;
+    const sheetRef = useRef<BottomSheetModal>(null);
+    const snapPoints = useMemo(() => ['62%'], []);
+
+    React.useImperativeHandle(ref, () => ({
+      present: () => sheetRef.current?.present(),
+      dismiss: () => sheetRef.current?.dismiss(),
+    }));
 
     const resetState = useCallback(() => {
       setSelectedMood(null);
@@ -54,30 +56,22 @@ export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
       setSubmitting(false);
     }, []);
 
-    useEffect(() => {
-      if (!visible) return;
-      backdropAnim.setValue(0);
-      sheetAnim.setValue(40);
-      RNAnimated.parallel([
-        RNAnimated.timing(backdropAnim, { toValue: 1, duration: 220, useNativeDriver: false }),
-        RNAnimated.spring(sheetAnim, { toValue: 0, useNativeDriver: false, damping: 20, stiffness: 180 }),
-      ]).start();
-    }, [visible, backdropAnim, sheetAnim]);
+    const handleSheetChange = useCallback((index: number) => {
+      if (index === -1) resetState();
+    }, [resetState]);
 
-    const close = useCallback((onComplete?: () => void) => {
-      RNAnimated.parallel([
-        RNAnimated.timing(backdropAnim, { toValue: 0, duration: 180, useNativeDriver: false }),
-        RNAnimated.timing(sheetAnim, { toValue: 20, duration: 180, useNativeDriver: false }),
-      ]).start(() => {
-        setVisible(false);
-        onComplete?.();
-      });
-    }, [backdropAnim, sheetAnim]);
-
-    useImperativeHandle(ref, () => ({
-      present: () => setVisible(true),
-      dismiss: () => close(() => resetState()),
-    }), [close, resetState]);
+    const renderBackdrop = useCallback(
+      (props: BottomSheetBackdropProps) => (
+        <BottomSheetBackdrop
+          {...props}
+          appearsOnIndex={0}
+          disappearsOnIndex={-1}
+          opacity={0.6}
+          style={[props.style, { backgroundColor: '#050410' }]}
+        />
+      ),
+      [],
+    );
 
     const handleSubmit = useCallback(async () => {
       if (!selectedMood || submitting) return;
@@ -90,70 +84,67 @@ export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
         });
         const entries = await api.get<BackendEntry[]>('/entries/current');
         onSubmitSuccess(Array.isArray(entries) ? entries : []);
-        close(() => resetState());
+        sheetRef.current?.dismiss();
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : 'Something went wrong');
       } finally {
         setSubmitting(false);
       }
-    }, [selectedMood, submitting, content, onSubmitSuccess, close, resetState]);
+    }, [selectedMood, submitting, content, onSubmitSuccess]);
 
     return (
-      <Modal
-        visible={visible}
-        animationType="none"
-        transparent
-        onRequestClose={() => close(() => resetState())}
+      <BottomSheetModal
+        ref={sheetRef}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        backdropComponent={renderBackdrop}
+        backgroundStyle={styles.background}
+        handleIndicatorStyle={styles.handle}
+        onChange={handleSheetChange}
       >
-        <RNAnimated.View style={[styles.backdrop, { opacity: backdropAnim }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => close(() => resetState())} />
-          <RNAnimated.View style={[styles.sheet, { transform: [{ translateY: sheetAnim }] }]}>
-            <View style={styles.handle} />
-            <View style={styles.content}>
-              <Text style={styles.title}>How are you feeling?</Text>
-              <Text style={styles.subtitle}>Choose a mood, then write your thought</Text>
+        <View style={styles.content}>
+          <Text style={styles.title}>How are you feeling?</Text>
+          <Text style={styles.subtitle}>Choose a mood, then write your thought</Text>
 
-              <Text style={styles.label}>MOOD</Text>
-              <View style={styles.moodRow}>
-                {MOODS.map(({ mood, label }) => (
-                  <MoodCircle
-                    key={mood}
-                    mood={mood}
-                    label={label}
-                    selected={selectedMood === mood}
-                    onPress={() => setSelectedMood(mood)}
-                  />
-                ))}
-              </View>
-
-              <Text style={styles.label}>
-                THOUGHT <Text style={styles.labelOptional}>(optional)</Text>
-              </Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Write your thought..."
-                placeholderTextColor="rgba(171,129,205,0.45)"
-                value={content}
-                onChangeText={setContent}
-                multiline
-                numberOfLines={3}
+          <Text style={styles.label}>MOOD</Text>
+          <View style={styles.moodRow}>
+            {MOODS.map(({ mood, label }) => (
+              <MoodCircle
+                key={mood}
+                mood={mood}
+                label={label}
+                selected={selectedMood === mood}
+                onPress={() => setSelectedMood(mood)}
               />
+            ))}
+          </View>
 
-              {error !== null && <Text style={styles.error}>{error}</Text>}
+          <Text style={styles.label}>
+            THOUGHT <Text style={styles.labelOptional}>(optional)</Text>
+          </Text>
+          <BottomSheetTextInput
+            style={styles.input}
+            placeholder="Write your thought..."
+            placeholderTextColor="rgba(171,129,205,0.45)"
+            value={content}
+            onChangeText={setContent}
+            multiline
+            numberOfLines={3}
+          />
 
-              <Pressable
-                style={[styles.submitBtn, (!selectedMood || submitting) && styles.submitBtnDisabled]}
-                onPress={handleSubmit}
-                disabled={!selectedMood || submitting}
-              >
-                <Text style={styles.submitBtnText}>
-                  {submitting ? 'Adding...' : '✦ Add the star'}
-                </Text>
-              </Pressable>
-            </View>
-          </RNAnimated.View>
-        </RNAnimated.View>
-      </Modal>
+          {error !== null && <Text style={styles.error}>{error}</Text>}
+
+          <Pressable
+            style={[styles.submitBtn, (!selectedMood || submitting) && styles.submitBtnDisabled]}
+            onPress={handleSubmit}
+            disabled={!selectedMood || submitting}
+          >
+            <Text style={styles.submitBtnText}>
+              {submitting ? 'Adding...' : '✦ Add the star'}
+            </Text>
+          </Pressable>
+        </View>
+      </BottomSheetModal>
     );
   },
 );
@@ -201,33 +192,15 @@ function MoodCircle({
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(5,4,16,0.6)',
-  },
-  sheet: {
-    width: '100%',
-    maxWidth: 480,
-    backgroundColor: '#1a1438', // deep space sheet surface
+  background: {
+    backgroundColor: '#1a1438', // deep space sheet surface, slightly lighter than bg #050410
     borderRadius: 24,
-    overflow: 'hidden',
   },
   handle: {
-    width: 40,
-    height: 4,
     backgroundColor: Palette.mauve,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginTop: 12,
-    marginBottom: 4,
   },
   content: {
+    flex: 1,
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
     paddingBottom: Spacing.five,
