@@ -13,19 +13,19 @@ type Props = {
   startYear: number;
   width: number;
   height: number;
+  onStarPress?: (date: string) => void;
 };
 
-export function ConstellationCanvas({ seed, entries, startYear, width, height }: Props) {
+export function ConstellationCanvas({ seed, entries, startYear, width, height, onStarPress }: Props) {
   const view = { centerX: width / 2, centerY: height / 2, zoom: 1 };
   const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
   const lastEntry = sorted[sorted.length - 1];
   const currentCId = lastEntry ? constellationIdForEntry(lastEntry.entryIndex) : 'c0';
   const currentEntries = sorted.filter((e) => constellationIdForEntry(e.entryIndex) === currentCId);
-  // Fixed scale — dashboard always shows full constellation, never minimized
   const scale = useSharedValue(1);
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <View style={StyleSheet.absoluteFill} pointerEvents={onStarPress ? 'box-none' : 'none'}>
       <ConstellationGroup
         seed={seed}
         constellationId={currentCId}
@@ -33,6 +33,7 @@ export function ConstellationCanvas({ seed, entries, startYear, width, height }:
         startYear={startYear}
         view={view}
         scale={scale}
+        onStarPress={onStarPress}
       />
     </View>
   );

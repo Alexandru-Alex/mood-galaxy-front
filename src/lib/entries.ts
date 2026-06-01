@@ -1,5 +1,5 @@
 import type { Mood } from '@/constants/theme';
-import type { BackendEntry, JournalNoteResponse } from '@/lib/types';
+import type { BackendEntry, JournalNoteResponse, PageResponse } from '@/lib/types';
 import { api } from '@/lib/api';
 
 export type Entry = { entryIndex: number; date: string; mood: Mood };
@@ -14,11 +14,14 @@ export function toEntries(data: BackendEntry[]): Entry[] {
 }
 
 export async function fetchEntriesByDate(date: string): Promise<JournalNoteResponse[]> {
+  if (!date) return [];
   const data = await api.get<JournalNoteResponse[]>(`/entries/${date}`);
   return Array.isArray(data) ? data : [];
 }
 
 export async function fetchAllEntries(): Promise<JournalNoteResponse[]> {
-  const data = await api.get<JournalNoteResponse[]>('/entries');
-  return Array.isArray(data) ? data : [];
+  const data = await api.get<PageResponse<JournalNoteResponse>>('/entries');
+  if (Array.isArray(data?.content)) return data.content;
+  console.warn('[fetchAllEntries] unexpected response shape', data);
+  return [];
 }
