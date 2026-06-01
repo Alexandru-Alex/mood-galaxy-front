@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
 import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -56,17 +57,37 @@ const SLOT_RADIUS = 120;
 
 
 function AstronautBanner({ message }: { message: string }) {
+  const translateY = useSharedValue(0);
+
+  useEffect(() => {
+    translateY.value = withRepeat(
+      withSequence(
+        withTiming(-12, { duration: 2000, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0, { duration: 2000, easing: Easing.inOut(Easing.sin) }),
+      ),
+      -1,
+      false,
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const floatStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
   return (
     <View style={offlineStyles.container} pointerEvents="none">
-      <Image
-        source={require('@/assets/images/astronaut-standby.png')}
-        style={offlineStyles.image}
-        resizeMode="contain"
-      />
-      <View style={offlineStyles.bubble}>
-        <Text style={offlineStyles.bubbleText}>{message}</Text>
-        <View style={offlineStyles.bubbleTail} />
-      </View>
+      <Animated.View style={floatStyle}>
+        <Image
+          source={require('@/assets/images/astronaut-standby.png')}
+          style={offlineStyles.image}
+          resizeMode="contain"
+        />
+        <View style={offlineStyles.bubble}>
+          <Text style={offlineStyles.bubbleText}>{message}</Text>
+          <View style={offlineStyles.bubbleTail} />
+        </View>
+      </Animated.View>
     </View>
   );
 }
