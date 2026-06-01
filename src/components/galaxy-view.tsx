@@ -1,19 +1,12 @@
-import { useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  useAnimatedReaction,
-  runOnJS,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 
 import { ConstellationGroup } from '@/components/constellation-group';
 import type { Entry } from '@/lib/entries';
 
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 3.0;
-const MINI_THRESHOLD = 0.5;
 
 type Props = {
   seed: number;
@@ -33,14 +26,6 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
   const savedX = useSharedValue(0);
   const savedY = useSharedValue(0);
   const savedScale = useSharedValue(1);
-
-  const [minimized, setMinimized] = useState(false);
-  useAnimatedReaction(
-    () => scale.value < MINI_THRESHOLD,
-    (isMini, wasMini) => {
-      if (isMini !== wasMini) runOnJS(setMinimized)(isMini);
-    },
-  );
 
   const pan = Gesture.Pan()
     .onBegin(() => {
@@ -84,7 +69,7 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
               view={view}
               canvasWidth={width}
               canvasHeight={height}
-              minimized={minimized}
+              scale={scale}
             />
           ))}
         </Animated.View>

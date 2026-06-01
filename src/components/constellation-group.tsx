@@ -6,6 +6,11 @@ import Animated, {
   useSharedValue,
   withSpring,
   withTiming,
+  withRepeat,
+  withSequence,
+  interpolate,
+  Extrapolation,
+  type SharedValue,
 } from 'react-native-reanimated';
 
 import { MoodColors, Palette, type Mood } from '@/constants/theme';
@@ -98,6 +103,8 @@ function ConstellationAura({
 }
 
 const DOT_RADIUS = 5;
+const MINI_FADE_MIN = 0.4;
+const MINI_FADE_MAX = 0.6;
 
 type Props = {
   seed: number;
@@ -107,7 +114,7 @@ type Props = {
   view: GalaxyView;
   canvasWidth: number;
   canvasHeight: number;
-  minimized?: boolean;
+  scale: SharedValue<number>;
 };
 
 export function ConstellationGroup({
@@ -118,7 +125,7 @@ export function ConstellationGroup({
   view,
   canvasWidth,
   canvasHeight,
-  minimized = false,
+  scale,
 }: Props) {
   const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
   const centerDate = sorted.length > 0 ? sorted[0].date : new Date().toISOString().slice(0, 10);
@@ -137,21 +144,44 @@ export function ConstellationGroup({
   const ghostPoints = allPositions.map((p) => `${p.x},${p.y}`).join(' ');
   const solidPoints = filledPositions.map((p) => `${p.x},${p.y}`).join(' ');
 
-  if (minimized) {
-    return (
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <View
-          style={[
-            styles.dot,
-            { left: auraCx - DOT_RADIUS, top: auraCy - DOT_RADIUS, backgroundColor: auraColor },
-          ]}
-        />
-      </View>
+  const fullStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scale.value, [MINI_FADE_MIN, MINI_FADE_MAX], [0, 1], Extrapolation.CLAMP),
+  }));
+
+  const dotStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scale.value, [MINI_FADE_MIN, MINI_FADE_MAX], [1, 0], Extrapolation.CLAMP),
+  }));
+
+  const dotPulse = useSharedValue(1);
+  useEffect(() => {
+    dotPulse.value = withRepeat(
+      withSequence(
+        withTiming(1.5, { duration: 1100 }),
+        withTiming(1, { duration: 1100 }),
+      ),
+      -1,
+      false,
     );
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const dotPulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: dotPulse.value }],
+    opacity: 0.5 + 0.5 / dotPulse.value,
+  }));
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Animated.View style={[StyleSheet.absoluteFill, dotStyle]} pointerEvents="none">
+        <Animated.View
+          style={[
+            styles.dot,
+            { left: auraCx - DOT_RADIUS, top: auraCy - DOT_RADIUS, backgroundColor: auraColor },
+            dotPulseStyle,
+          ]}
+        />
+      </Animated.View>
+      <Animated.View style={[StyleSheet.absoluteFill, fullStyle]} pointerEvents="none">
       {isComplete && (
         <ConstellationAura
           cx={auraCx}
@@ -193,6 +223,7 @@ export function ConstellationGroup({
           <FilledStar key={`f-${i}`} x={p.x} y={p.y} mood={slotMoodMap.get(i) ?? 'NEUTRAL'} />
         ) : null,
       )}
+      </Animated.View>
     </View>
   );
 }
