@@ -1,5 +1,6 @@
 import type { Mood } from '@/constants/theme';
-import type { BackendEntry } from '@/lib/types';
+import type { BackendEntry, JournalNoteResponse } from '@/lib/types';
+import { api } from '@/lib/api';
 
 export type Entry = { entryIndex: number; date: string; mood: Mood };
 
@@ -10,4 +11,14 @@ export function toEntries(data: BackendEntry[]): Entry[] {
     date: item.entryDate,
     mood: (item.mood as Mood) || 'NEUTRAL',
   }));
+}
+
+export async function fetchEntriesByDate(date: string): Promise<JournalNoteResponse[]> {
+  const data = await api.get<JournalNoteResponse[]>(`/entries/${date}`);
+  return Array.isArray(data) ? data : [];
+}
+
+export async function fetchAllEntries(): Promise<JournalNoteResponse[]> {
+  const data = await api.get<JournalNoteResponse[]>('/entries');
+  return Array.isArray(data) ? data : [];
 }
