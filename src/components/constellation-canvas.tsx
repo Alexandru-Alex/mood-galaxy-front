@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Svg, { Polyline } from 'react-native-svg';
+import Svg, { Circle, Defs, Polyline, RadialGradient, Stop } from 'react-native-svg';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -10,6 +10,7 @@ import Animated, {
 
 import { MoodColors, Palette, type Mood } from '@/constants/theme';
 import {
+  blendMoodColors,
   constellationIdForEntry,
   generateConstellationShape,
   getConstellationCenter,
@@ -57,6 +58,47 @@ function GhostStar({ x, y }: Point) {
   );
 }
 
+const AURA_RADIUS = SLOT_RADIUS * 1.4;
+
+function ConstellationAura({
+  cx,
+  cy,
+  color,
+  radius,
+  width,
+  height,
+}: {
+  cx: number;
+  cy: number;
+  color: string;
+  radius: number;
+  width: number;
+  height: number;
+}) {
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 1500 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, style]} pointerEvents="none">
+      <Svg width={width} height={height}>
+        <Defs>
+          <RadialGradient id="constellation-aura" cx="50%" cy="50%" r="50%">
+            <Stop offset="0%" stopColor={color} stopOpacity="0.45" />
+            <Stop offset="100%" stopColor={color} stopOpacity="0" />
+          </RadialGradient>
+        </Defs>
+        <Circle cx={cx} cy={cy} r={radius} fill="url(#constellation-aura)" />
+      </Svg>
+    </Animated.View>
+  );
+}
+
 type Props = {
   seed: number;
   entries: Entry[];
@@ -72,6 +114,10 @@ export function ConstellationCanvas({ seed, entries, startYear, width, height }:
   const centerDate = sorted.length > 0 ? sorted[0].date : new Date().toISOString().slice(0, 10);
 
   const center = getConstellationCenter(centerDate, startYear);
+  const isComplete = sorted.length >= 7;
+  const auraCx = view.centerX + Math.cos(center.angle) * center.radius * view.zoom;
+  const auraCy = view.centerY + Math.sin(center.angle) * center.radius * view.zoom;
+  const auraColor = isComplete ? blendMoodColors(sorted, MoodColors) : '#000000';
   const shape = generateConstellationShape(seed, cId);
   const allPositions = shape.map((p) => starScreenPosition(center, p, view, SLOT_RADIUS));
   const filledSlots = new Set(sorted.map((e) => slotForEntry(e.entryIndex)));
@@ -85,6 +131,16 @@ export function ConstellationCanvas({ seed, entries, startYear, width, height }:
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {isComplete && (
+        <ConstellationAura
+          cx={auraCx}
+          cy={auraCy}
+          color={auraColor}
+          radius={AURA_RADIUS}
+          width={width}
+          height={height}
+        />
+      )}
       <Svg width={width} height={height} style={StyleSheet.absoluteFill}>
         <Polyline
           points={ghostPoints}
