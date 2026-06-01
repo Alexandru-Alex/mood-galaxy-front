@@ -1,46 +1,35 @@
 import { Image } from 'expo-image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
-import Animated, { Easing, Keyframe } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
+import Animated, { Easing, Keyframe, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 const DURATION = 600;
 
-const splashKeyframe = new Keyframe({
-  0: {
-    transform: [{ scale: INITIAL_SCALE_FACTOR }],
-    opacity: 1,
-  },
-  20: {
-    opacity: 1,
-  },
-  70: {
-    opacity: 0,
-    easing: Easing.elastic(0.7),
-  },
-  100: {
-    opacity: 0,
-    easing: Easing.elastic(0.7),
-  },
-});
-
 export function AnimatedSplashOverlay() {
   const [visible, setVisible] = useState(true);
+  const opacity = useSharedValue(1);
+  const scale = useSharedValue(INITIAL_SCALE_FACTOR);
+
+  useEffect(() => {
+    opacity.value = withSequence(
+      withTiming(1, { duration: DURATION * 0.2 }),
+      withTiming(0, { duration: DURATION * 0.5, easing: Easing.elastic(0.7) }),
+    );
+    scale.value = withTiming(1, { duration: DURATION, easing: Easing.elastic(0.7) });
+    const timer = setTimeout(() => setVisible(false), DURATION + 100);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
 
   if (!visible) return null;
 
-  return (
-    <Animated.View
-      entering={splashKeyframe.duration(DURATION).withCallback((finished) => {
-        'worklet';
-        if (finished) {
-          scheduleOnRN(setVisible, false);
-        }
-      })}
-      style={styles.backgroundSolidColor}
-    />
-  );
+  return <Animated.View style={[styles.backgroundSolidColor, style]} />;
 }
 
 const keyframe = new Keyframe({
