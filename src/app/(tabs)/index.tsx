@@ -54,18 +54,8 @@ const START_YEAR = 2026;
 const MAX_SLOTS = 7;
 const SLOT_RADIUS = 120;
 
-const DEV_MOCK_ENTRIES: Entry[] = [
-  { entryIndex: 0, date: '2026-01-03', mood: 'JOYFUL' },
-  { entryIndex: 1, date: '2026-01-07', mood: 'CALM' },
-  { entryIndex: 2, date: '2026-01-12', mood: 'NEUTRAL' },
-  { entryIndex: 3, date: '2026-01-18', mood: 'SAD' },
-  { entryIndex: 4, date: '2026-01-22', mood: 'ANXIOUS' },
-  { entryIndex: 5, date: '2026-01-25', mood: 'CALM' },
-  { entryIndex: 6, date: '2026-01-28', mood: 'JOYFUL' },
-  { entryIndex: 7, date: '2026-02-03', mood: 'NEUTRAL' },
-];
 
-function OfflineBanner() {
+function AstronautBanner({ message }: { message: string }) {
   return (
     <View style={offlineStyles.container} pointerEvents="none">
       <Image
@@ -74,9 +64,7 @@ function OfflineBanner() {
         resizeMode="contain"
       />
       <View style={offlineStyles.bubble}>
-        <Text style={offlineStyles.bubbleText}>
-          Houston, we have a problem...{'\n'}Can't reach the galaxy right now!
-        </Text>
+        <Text style={offlineStyles.bubbleText}>{message}</Text>
         <View style={offlineStyles.bubbleTail} />
       </View>
     </View>
@@ -136,10 +124,9 @@ export default function HomeScreen() {
   const { data: backendEntries = [], isError: fetchError } = useQuery({
     queryKey: ['entries', 'current'],
     queryFn: () => api.get<BackendEntry[]>('/entries/current'),
-    enabled: !__DEV__,
   });
 
-  const entries: Entry[] = __DEV__ ? DEV_MOCK_ENTRIES : toEntries(backendEntries);
+  const entries: Entry[] = toEntries(backendEntries);
   const startYear = backendEntries.length > 0
     ? new Date(backendEntries[0].entryDate).getUTCFullYear()
     : START_YEAR;
@@ -172,14 +159,16 @@ export default function HomeScreen() {
       <StatusBar style="light" />
       <SpaceBackground />
       <Starfield />
-      <ConstellationCanvas
-        seed={seed}
-        entries={entries}
-        startYear={startYear}
-        width={width}
-        height={height}
-        onStarPress={setSelectedDate}
-      />
+      {entries.length > 0 && (
+        <ConstellationCanvas
+          seed={seed}
+          entries={entries}
+          startYear={startYear}
+          width={width}
+          height={height}
+          onStarPress={setSelectedDate}
+        />
+      )}
 
       <View
         style={[styles.hud, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}
@@ -194,7 +183,7 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        {mascotPos && !fetchError && (
+        {mascotPos && entries.length > 0 && !fetchError && (
           <View
             style={{ position: 'absolute', left: mascotPos.x - 30, top: mascotPos.y - 52 }}
             pointerEvents="none"
@@ -203,7 +192,12 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {fetchError && <OfflineBanner />}
+        {fetchError && (
+          <AstronautBanner message={"Houston, we have a problem...\nCan't reach the galaxy right now!"} />
+        )}
+        {!fetchError && entries.length === 0 && (
+          <AstronautBanner message={"Your galaxy is empty.\nAdd your first star!"} />
+        )}
 
         <View style={styles.bottomArea} pointerEvents="box-none">
           <Pressable
