@@ -159,19 +159,22 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
     }
     return [...byKey.entries()].map(([key, cIds]) => {
       const poses = cIds.map(cId => positions.get(cId)!).filter(Boolean);
-      const cx = poses.reduce((s, p) => s + p.cx, 0) / poses.length;
-      const cy = poses.reduce((s, p) => s + p.cy, 0) / poses.length;
+      // cx/cy are offsets from canvas center; convert to absolute canvas coords
+      const offsetCx = poses.reduce((s, p) => s + p.cx, 0) / poses.length;
+      const offsetCy = poses.reduce((s, p) => s + p.cy, 0) / poses.length;
+      const cx = offsetCx + width / 2;
+      const cy = offsetCy + height / 2;
       const allEntries = cIds.flatMap(cId => groups.get(cId) ?? []);
       const color = blendMoodColors(allEntries, MoodColors);
       const maxDist = poses.length > 1
-        ? Math.max(...poses.map(p => Math.hypot(p.cx - cx, p.cy - cy)))
+        ? Math.max(...poses.map(p => Math.hypot(p.cx - offsetCx, p.cy - offsetCy)))
         : 0;
       const auraRadius = maxDist + DOT_AURA_RADIUS * 3;
       const [year, month] = key.split('-').map(Number);
       const label = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       return { key, label, cx, cy, color, auraRadius };
     });
-  }, [positions, groups]);
+  }, [positions, groups, width, height]);
 
   // Center on the most recent constellation once groups load
   useEffect(() => {
