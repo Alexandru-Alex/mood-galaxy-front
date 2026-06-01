@@ -3,6 +3,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments }
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AudioProvider } from '@/context/audio-context';
 import { getStoredToken } from '@/lib/api';
@@ -36,20 +37,22 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <AudioProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AuthGuard />
-        <AnimatedSplashOverlay />
-        <Stack initialRouteName="landing" screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="landing" />
-          <Stack.Screen name="welcome" />
-          <Stack.Screen name="dashboard" />
-          <Stack.Screen name="pending-verification" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="galaxy" />
-          <Stack.Screen name="auth" />
-        </Stack>
-      </ThemeProvider>
-    </AudioProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AudioProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <AuthGuard />
+          <AnimatedSplashOverlay />
+          <Stack initialRouteName="landing" screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="landing" />
+            <Stack.Screen name="welcome" />
+            <Stack.Screen name="dashboard" />
+            <Stack.Screen name="pending-verification" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="galaxy" />
+            <Stack.Screen name="auth" />
+          </Stack>
+        </ThemeProvider>
+      </AudioProvider>
+    </GestureHandlerRootView>
   );
 }
