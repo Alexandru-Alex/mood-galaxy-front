@@ -57,7 +57,7 @@ export default function JurnalScreen() {
       ) : groups.length === 0 ? (
         <Text style={styles.emptyText}>No entries yet</Text>
       ) : (
-        <ScrollView contentContainerStyle={styles.listContent}>
+        <ScrollView contentContainerStyle={styles.listContent} indicatorStyle="white">
           {groups.map(({ date, notes }) => (
             <View key={date} style={styles.group}>
               <Text style={styles.groupHeader}>
