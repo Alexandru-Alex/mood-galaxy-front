@@ -139,6 +139,15 @@ export const api = {
     }
   },
 
+  async delete<T = unknown>(path: string): Promise<T> {
+    const headers = await buildHeaders();
+    const res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE', headers });
+    if (!res.ok) return handleErrorResponse(res);
+    const text = await res.text();
+    if (!text) return undefined as T;
+    try { return JSON.parse(text) as T; } catch { return text as T; }
+  },
+
   async patch<T = unknown>(path: string, body: unknown): Promise<T> {
     const headers = await buildHeaders();
     const res = await fetch(`${BASE_URL}${path}`, {

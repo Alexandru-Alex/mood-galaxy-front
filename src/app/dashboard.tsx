@@ -9,7 +9,7 @@ import { JournalSheet, type JournalSheetHandle } from '@/components/journal-shee
 import { DayNotesSheet } from '@/components/day-notes-sheet';
 import { SpaceBackground } from '@/components/space-background';
 import { Starfield } from '@/components/starfield';
-import { AstronautLanding } from '@/components/astronaut-landing';
+import { AstronautConstellation } from '@/components/astronaut-constellation';
 import { Palette, Spacing } from '@/constants/theme';
 import { api, getStoredSeed } from '@/lib/api';
 import type { BackendEntry } from '@/lib/types';
@@ -145,7 +145,7 @@ export default function DashboardScreen() {
             style={{ position: 'absolute', left: mascotPos.x - 30, top: mascotPos.y - 52 }}
             pointerEvents="none"
           >
-            <AstronautLanding width={60} height={52} />
+            <AstronautConstellation width={60} height={60} />
           </View>
         )}
 
@@ -194,6 +194,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    gap: 8,
   },
   dateText: {
     fontSize: 13,
@@ -208,11 +209,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   progressText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     color: Palette.mauve,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
     textAlign: 'right',
+    flexShrink: 1,
   },
   bottomArea: {
     alignItems: 'center',
