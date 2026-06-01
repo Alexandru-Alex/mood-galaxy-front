@@ -56,8 +56,8 @@ export default function AppTabs() {
           <TabTrigger name="galaxy" href="/galaxy" asChild>
             <TabIconButton icon="planet" iconOutline="planet-outline" />
           </TabTrigger>
-          <TabTrigger name="explore" href="/explore" asChild>
-            <TabIconButton icon="compass" iconOutline="compass-outline" />
+          <TabTrigger name="jurnal" href="/jurnal" asChild>
+            <TabIconButton icon="book" iconOutline="book-outline" />
           </TabTrigger>
           <TabTrigger name="you" href="/you" asChild>
             <TabIconButton icon="person" iconOutline="person-outline" />
