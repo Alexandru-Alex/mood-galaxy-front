@@ -69,15 +69,11 @@ function ConstellationAura({
   cy,
   color,
   radius,
-  canvasWidth,
-  canvasHeight,
 }: {
   cx: number;
   cy: number;
   color: string;
   radius: number;
-  canvasWidth: number;
-  canvasHeight: number;
 }) {
   const gradientId = useRef(`aura-${Math.random().toString(36).slice(2)}`).current;
   const opacity = useSharedValue(0);
@@ -89,16 +85,23 @@ function ConstellationAura({
 
   const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
+  // Local SVG positioned at the aura center — avoids clipping when constellation is off canvas origin
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, style]} pointerEvents="none">
-      <Svg width={canvasWidth} height={canvasHeight}>
+    <Animated.View
+      style={[
+        { position: 'absolute', left: cx - radius, top: cy - radius, width: radius * 2, height: radius * 2 },
+        style,
+      ]}
+      pointerEvents="none"
+    >
+      <Svg width={radius * 2} height={radius * 2}>
         <Defs>
           <RadialGradient id={gradientId} cx="50%" cy="50%" r="50%" gradientUnits="objectBoundingBox">
             <Stop offset="0%" stopColor={color} stopOpacity="0.45" />
             <Stop offset="100%" stopColor={color} stopOpacity="0" />
           </RadialGradient>
         </Defs>
-        <Circle cx={cx} cy={cy} r={radius} fill={`url(#${gradientId})`} />
+        <Circle cx={radius} cy={radius} r={radius} fill={`url(#${gradientId})`} />
       </Svg>
     </Animated.View>
   );
@@ -113,8 +116,6 @@ type Props = {
   entries: Entry[];
   startYear: number;
   view: GalaxyView;
-  canvasWidth: number;
-  canvasHeight: number;
   scale: SharedValue<number>;
   baseRadius?: number;
   ringGap?: number;
@@ -126,8 +127,6 @@ export function ConstellationGroup({
   entries,
   startYear,
   view,
-  canvasWidth,
-  canvasHeight,
   scale,
   baseRadius,
   ringGap,
@@ -214,13 +213,19 @@ export function ConstellationGroup({
           cy={auraCy}
           color={auraColor}
           radius={AURA_RADIUS}
-          canvasWidth={canvasWidth}
-          canvasHeight={canvasHeight}
         />
       )}
-      <Svg width={canvasWidth} height={canvasHeight} style={StyleSheet.absoluteFill}>
+      <Svg
+        width={SLOT_RADIUS * 2 + HALO}
+        height={SLOT_RADIUS * 2 + HALO}
+        style={{
+          position: 'absolute',
+          left: auraCx - SLOT_RADIUS - HALO / 2,
+          top: auraCy - SLOT_RADIUS - HALO / 2,
+        }}
+      >
         <Polyline
-          points={ghostPoints}
+          points={allPositions.map((p) => `${p.x - (auraCx - SLOT_RADIUS - HALO / 2)},${p.y - (auraCy - SLOT_RADIUS - HALO / 2)}`).join(' ')}
           fill="none"
           stroke={Palette.brightLavender}
           strokeWidth={1}
@@ -231,7 +236,7 @@ export function ConstellationGroup({
         />
         {filledPositions.length >= 2 && (
           <Polyline
-            points={solidPoints}
+            points={filledPositions.map((p) => `${p.x - (auraCx - SLOT_RADIUS - HALO / 2)},${p.y - (auraCy - SLOT_RADIUS - HALO / 2)}`).join(' ')}
             fill="none"
             stroke={Palette.brightLavender}
             strokeWidth={1}

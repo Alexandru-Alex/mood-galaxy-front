@@ -168,8 +168,6 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
                 entries={entries}
                 startYear={startYear}
                 view={view}
-                canvasWidth={width}
-                canvasHeight={height}
                 scale={scale}
                 baseRadius={GALAXY_BASE_RADIUS}
                 ringGap={GALAXY_RING_GAP}

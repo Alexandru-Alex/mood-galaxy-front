@@ -30,8 +30,6 @@ export function ConstellationCanvas({ seed, entries, startYear, width, height }:
         entries={sorted}
         startYear={startYear}
         view={view}
-        canvasWidth={width}
-        canvasHeight={height}
         scale={scale}
       />
     </View>
