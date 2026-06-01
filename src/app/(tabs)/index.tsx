@@ -77,16 +77,16 @@ function AstronautBanner({ message }: { message: string }) {
 
   return (
     <View style={offlineStyles.container} pointerEvents="none">
-      <Animated.View style={floatStyle}>
+      <Animated.View style={[floatStyle, offlineStyles.inner]}>
+        <View style={offlineStyles.bubble}>
+          <Text style={offlineStyles.bubbleText}>{message}</Text>
+          <View style={offlineStyles.bubbleTail} />
+        </View>
         <Image
           source={require('@/assets/images/astronaut-standby.png')}
           style={offlineStyles.image}
           resizeMode="contain"
         />
-        <View style={offlineStyles.bubble}>
-          <Text style={offlineStyles.bubbleText}>{message}</Text>
-          <View style={offlineStyles.bubbleTail} />
-        </View>
       </Animated.View>
     </View>
   );
@@ -101,6 +101,9 @@ const offlineStyles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  inner: {
+    alignItems: 'center',
   },
   image: {
     width: 130,
@@ -124,16 +127,16 @@ const offlineStyles = StyleSheet.create({
   },
   bubbleTail: {
     position: 'absolute',
-    top: -10,
+    bottom: -10,
     alignSelf: 'center',
     width: 0,
     height: 0,
     borderLeftWidth: 10,
     borderRightWidth: 10,
-    borderBottomWidth: 10,
+    borderTopWidth: 10,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderBottomColor: '#ffffff',
+    borderTopColor: '#ffffff',
   },
 });
 
