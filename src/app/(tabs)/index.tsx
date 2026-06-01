@@ -95,10 +95,12 @@ function AstronautBanner({ message }: { message: string }) {
 const offlineStyles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 140,
+    top: 0,
+    bottom: 0,
     left: 0,
     right: 0,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   image: {
     width: 130,
