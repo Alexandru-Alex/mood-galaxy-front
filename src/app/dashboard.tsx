@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ConstellationCanvas } from '@/components/constellation-canvas';
 import { toEntries, type Entry } from '@/lib/entries';
@@ -66,6 +67,7 @@ export default function DashboardScreen() {
   const [entries, setEntries] = useState<Entry[]>(__DEV__ ? DEV_MOCK_ENTRIES : []);
   const [startYear, setStartYear] = useState(START_YEAR);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const router = useRouter();
   const bottomSheetRef = useRef<JournalSheetHandle>(null);
 
   useEffect(() => {
@@ -147,7 +149,7 @@ export default function DashboardScreen() {
             <Pressable style={styles.navItem}>
               <Text style={[styles.navIcon, { color: Palette.mauve }]}>⌂</Text>
             </Pressable>
-            <Pressable style={styles.navItem}>
+            <Pressable style={styles.navItem} onPress={() => router.push('/galaxy')}>
               <Text style={[styles.navIcon, { color: Palette.brightLavender }]}>◎</Text>
             </Pressable>
             <Pressable style={styles.navItem}>
