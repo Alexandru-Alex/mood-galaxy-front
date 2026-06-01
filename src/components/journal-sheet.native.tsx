@@ -91,6 +91,7 @@ export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
         await api.post<CreateJournalNoteResponse>('/journal', {
           mood: selectedMood,
           content: content.trim(),
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         });
         const entries = await api.get<BackendEntry[]>('/entries/current');
         onSubmitSuccess(Array.isArray(entries) ? entries : []);
