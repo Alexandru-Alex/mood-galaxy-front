@@ -116,6 +116,8 @@ type Props = {
   canvasWidth: number;
   canvasHeight: number;
   scale: SharedValue<number>;
+  baseRadius?: number;
+  ringGap?: number;
 };
 
 export function ConstellationGroup({
@@ -127,11 +129,16 @@ export function ConstellationGroup({
   canvasWidth,
   canvasHeight,
   scale,
+  baseRadius,
+  ringGap,
 }: Props) {
   const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
   const centerDate = sorted.length > 0 ? sorted[0].date : new Date().toISOString().slice(0, 10);
 
-  const center = getConstellationCenter(centerDate, startYear);
+  const layoutOpts = baseRadius !== undefined || ringGap !== undefined
+    ? { baseRadius: baseRadius ?? 40, ringGap: ringGap ?? 90 }
+    : undefined;
+  const center = getConstellationCenter(centerDate, startYear, layoutOpts);
   const isComplete = sorted.length >= 7;
   const auraCx = view.centerX + Math.cos(center.angle) * center.radius * view.zoom;
   const auraCy = view.centerY + Math.sin(center.angle) * center.radius * view.zoom;
