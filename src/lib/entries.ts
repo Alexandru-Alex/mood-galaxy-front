@@ -20,7 +20,7 @@ export async function fetchEntriesByDate(date: string): Promise<JournalNoteRespo
 }
 
 export async function fetchAllEntries(): Promise<JournalNoteResponse[]> {
-  const data = await api.get<PageResponse<JournalNoteResponse>>('/entries');
+  const data = await api.get<PageResponse<JournalNoteResponse>>('/notes');
   if (Array.isArray(data?.content)) return data.content;
   console.warn('[fetchAllEntries] unexpected response shape', data);
   return [];
