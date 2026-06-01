@@ -30,12 +30,13 @@ export default function JournalScreen() {
       .then((data) => {
         const map = new Map<string, JournalNoteResponse[]>();
         for (const note of data) {
+          if (!note?.createdAt) continue;
           const date = note.createdAt.slice(0, 10);
           if (!map.has(date)) map.set(date, []);
           map.get(date)!.push(note);
         }
         for (const notes of map.values()) {
-          notes.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+          notes.sort((a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? ''));
         }
         const sorted = [...map.entries()]
           .sort(([a], [b]) => b.localeCompare(a))
