@@ -17,9 +17,10 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { MoodColors, Palette, Spacing, type Mood } from '@/constants/theme';
 import { api } from '@/lib/api';
-import type { BackendEntry, CreateJournalNoteResponse } from '@/lib/types';
+import type { CreateJournalNoteResponse } from '@/lib/types';
 
 const MOODS: { mood: Mood; label: string }[] = [
   { mood: 'JOYFUL', label: 'Joyful' },
@@ -30,9 +31,7 @@ const MOODS: { mood: Mood; label: string }[] = [
   { mood: 'ANGRY', label: 'Angry' },
 ];
 
-type Props = {
-  onSubmitSuccess: (entries: BackendEntry[]) => void;
-};
+type Props = Record<string, never>;
 
 export type JournalSheetHandle = {
   present: () => void;
@@ -42,12 +41,13 @@ export type JournalSheetHandle = {
 const SHEET_HEIGHT = Dimensions.get('window').height * 0.65;
 
 export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
-  ({ onSubmitSuccess }, ref) => {
+  (_props, ref) => {
     const [visible, setVisible] = useState(false);
     const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
     const [content, setContent] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
     const backdropAnim = useRef(new RNAnimated.Value(0)).current;
     const sheetAnim = useRef(new RNAnimated.Value(SHEET_HEIGHT)).current;
 
@@ -92,15 +92,15 @@ export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
           mood: selectedMood,
           content: content.trim(),
         });
-        const entries = await api.get<BackendEntry[]>('/entries/current');
-        onSubmitSuccess(Array.isArray(entries) ? entries : []);
+        await queryClient.invalidateQueries({ queryKey: ['entries', 'current'] });
+        await queryClient.invalidateQueries({ queryKey: ['notes'] });
         close(() => resetState());
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : 'Something went wrong');
       } finally {
         setSubmitting(false);
       }
-    }, [selectedMood, submitting, content, onSubmitSuccess, close, resetState]);
+    }, [selectedMood, submitting, content, queryClient, close, resetState]);
 
     return (
       <Modal

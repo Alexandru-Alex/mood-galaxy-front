@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -129,36 +130,28 @@ export default function HomeScreen() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [seed, setSeed] = useState(FALLBACK_SEED);
-  const [entries, setEntries] = useState<Entry[]>(__DEV__ ? DEV_MOCK_ENTRIES : []);
-  const [startYear, setStartYear] = useState(START_YEAR);
   const [displayName, setDisplayName] = useState<string | null>(null);
-  const [fetchError, setFetchError] = useState(false);
   const bottomSheetRef = useRef<JournalSheetHandle>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const { data: backendEntries = [], isError: fetchError } = useQuery({
+    queryKey: ['entries', 'current'],
+    queryFn: () => api.get<BackendEntry[]>('/entries/current'),
+    enabled: !__DEV__,
+  });
+
+  const entries: Entry[] = __DEV__ ? DEV_MOCK_ENTRIES : toEntries(backendEntries);
+  const startYear = backendEntries.length > 0
+    ? new Date(backendEntries[0].entryDate).getUTCFullYear()
+    : START_YEAR;
 
   useEffect(() => {
     getStoredSeed()
       .then((s) => { if (s !== null) setSeed(s); })
       .catch(console.error);
 
-    api.get<BackendEntry[]>('/entries/current')
-      .then((data) => {
-        if (!Array.isArray(data)) return;
-        setFetchError(false);
-        setEntries(toEntries(data));
-        if (data.length > 0) setStartYear(new Date(data[0].entryDate).getUTCFullYear());
-      })
-      .catch(() => setFetchError(true));
-
     api.get<AccountDto>('/accounts')
       .then((data) => setDisplayName(data.displayName ?? null))
       .catch(console.error);
-  }, []);
-
-  const handleSubmitSuccess = useCallback((data: BackendEntry[]) => {
-    setFetchError(false);
-    setEntries(toEntries(data));
-    if (data.length > 0) setStartYear(new Date(data[0].entryDate).getUTCFullYear());
   }, []);
 
   const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
@@ -221,7 +214,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <JournalSheet ref={bottomSheetRef} onSubmitSuccess={handleSubmitSuccess} />
+      <JournalSheet ref={bottomSheetRef} />
       <DayNotesSheet date={selectedDate} onClose={() => setSelectedDate(null)} />
     </View>
   );

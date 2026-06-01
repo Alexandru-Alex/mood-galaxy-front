@@ -1,4 +1,5 @@
 import { Sora_700Bold, useFonts } from '@expo-google-fonts/sora';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -10,6 +11,8 @@ import { getStoredToken } from '@/lib/api';
 
 
 SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient();
 
 function AuthGuard() {
   const segments = useSegments();
@@ -38,6 +41,7 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
+    <QueryClientProvider client={queryClient}>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AudioProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -55,5 +59,6 @@ export default function RootLayout() {
         </ThemeProvider>
       </AudioProvider>
     </GestureHandlerRootView>
+    </QueryClientProvider>
   );
 }
