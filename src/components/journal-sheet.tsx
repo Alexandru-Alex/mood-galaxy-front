@@ -1,5 +1,6 @@
-import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
+  Animated as RNAnimated,
   Modal,
   Platform,
   Pressable,
@@ -52,6 +53,8 @@ export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
     const [webVisible, setWebVisible] = useState(false);
     const sheetModalRef = useRef<BottomSheetModal>(null);
     const snapPoints = useMemo(() => ['62%'], []);
+    const webBackdropAnim = useRef(new RNAnimated.Value(0)).current;
+    const webSheetAnim = useRef(new RNAnimated.Value(40)).current;
 
     const resetState = useCallback(() => {
       setSelectedMood(null);
@@ -59,6 +62,27 @@ export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
       setError(null);
       setSubmitting(false);
     }, []);
+
+    // Animate in when modal becomes visible
+    useEffect(() => {
+      if (!webVisible) return;
+      webBackdropAnim.setValue(0);
+      webSheetAnim.setValue(40);
+      RNAnimated.parallel([
+        RNAnimated.timing(webBackdropAnim, { toValue: 1, duration: 220, useNativeDriver: false }),
+        RNAnimated.spring(webSheetAnim, { toValue: 0, useNativeDriver: false, damping: 20, stiffness: 180 }),
+      ]).start();
+    }, [webVisible, webBackdropAnim, webSheetAnim]);
+
+    const closeWeb = useCallback((onComplete?: () => void) => {
+      RNAnimated.parallel([
+        RNAnimated.timing(webBackdropAnim, { toValue: 0, duration: 180, useNativeDriver: false }),
+        RNAnimated.timing(webSheetAnim, { toValue: 20, duration: 180, useNativeDriver: false }),
+      ]).start(() => {
+        setWebVisible(false);
+        onComplete?.();
+      });
+    }, [webBackdropAnim, webSheetAnim]);
 
     useImperativeHandle(ref, () => ({
       present: () => {
@@ -70,13 +94,12 @@ export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
       },
       dismiss: () => {
         if (Platform.OS === 'web') {
-          setWebVisible(false);
-          resetState();
+          closeWeb(() => resetState());
         } else {
           sheetModalRef.current?.dismiss();
         }
       },
-    }), [resetState]);
+    }), [closeWeb, resetState]);
 
     const handleSheetChange = useCallback((index: number) => {
       if (index === -1) resetState();
@@ -107,8 +130,7 @@ export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
         const entries = await api.get<BackendEntry[]>('/entries/current');
         onSubmitSuccess(Array.isArray(entries) ? entries : []);
         if (Platform.OS === 'web') {
-          setWebVisible(false);
-          resetState();
+          closeWeb(() => resetState());
         } else {
           sheetModalRef.current?.dismiss();
         }
@@ -180,22 +202,22 @@ export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
       return (
         <Modal
           visible={webVisible}
-          animationType="slide"
+          animationType="none"
           transparent
-          onRequestClose={() => { setWebVisible(false); resetState(); }}
+          onRequestClose={() => closeWeb(() => resetState())}
         >
-          <View style={styles.webBackdrop}>
+          <RNAnimated.View style={[styles.webBackdrop, { opacity: webBackdropAnim }]}>
             <Pressable
               style={StyleSheet.absoluteFill}
-              onPress={() => { setWebVisible(false); resetState(); }}
+              onPress={() => closeWeb(() => resetState())}
             />
-            <View style={styles.webSheet}>
+            <RNAnimated.View style={[styles.webSheet, { transform: [{ translateY: webSheetAnim }] }]}>
               <View style={styles.webHandle} />
               <View style={styles.content}>
                 {formContent(true)}
               </View>
-            </View>
-          </View>
+            </RNAnimated.View>
+          </RNAnimated.View>
         </Modal>
       );
     }
@@ -369,9 +391,9 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 480,
     backgroundColor: '#1a1438',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderRadius: 24,
     paddingBottom: Spacing.five,
+    overflow: 'hidden',
   },
   webHandle: {
     width: 40,
