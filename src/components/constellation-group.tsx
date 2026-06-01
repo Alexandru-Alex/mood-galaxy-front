@@ -103,8 +103,8 @@ function ConstellationAura({
 }
 
 const DOT_RADIUS = 5;
-const MINI_FADE_MIN = 0.4;
-const MINI_FADE_MAX = 0.6;
+const CONSTELLATION_FADE_OUT = [0.5, 0.65]; // scale range where constellation fades out
+const DOT_FADE_IN = [0.35, 0.5];            // scale range where dot fades in (after constellation gone)
 
 type Props = {
   seed: number;
@@ -145,11 +145,11 @@ export function ConstellationGroup({
   const solidPoints = filledPositions.map((p) => `${p.x},${p.y}`).join(' ');
 
   const fullStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scale.value, [MINI_FADE_MIN, MINI_FADE_MAX], [0, 1], Extrapolation.CLAMP),
+    opacity: interpolate(scale.value, CONSTELLATION_FADE_OUT, [0, 1], Extrapolation.CLAMP),
   }));
 
   const dotStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scale.value, [MINI_FADE_MIN, MINI_FADE_MAX], [1, 0], Extrapolation.CLAMP),
+    opacity: interpolate(scale.value, DOT_FADE_IN, [1, 0], Extrapolation.CLAMP),
   }));
 
   const dotPulse = useSharedValue(1);
