@@ -21,7 +21,6 @@ const splashKeyframe = new Keyframe({
   },
   100: {
     opacity: 0,
-    transform: [{ scale: 1 }],
     easing: Easing.elastic(0.7),
   },
 });
@@ -49,7 +48,6 @@ const keyframe = new Keyframe({
     transform: [{ scale: INITIAL_SCALE_FACTOR }],
   },
   100: {
-    transform: [{ scale: 1 }],
     easing: Easing.elastic(0.7),
   },
 });
@@ -66,7 +64,6 @@ const logoKeyframe = new Keyframe({
   },
   100: {
     opacity: 1,
-    transform: [{ scale: 1 }],
     easing: Easing.elastic(0.7),
   },
 });
