@@ -25,3 +25,8 @@ export async function fetchAllEntries(): Promise<JournalNoteResponse[]> {
   console.warn('[fetchAllEntries] unexpected response shape', data);
   return [];
 }
+
+export async function fetchNotesPage(page: number): Promise<PageResponse<JournalNoteResponse>> {
+  const data = await api.get<PageResponse<JournalNoteResponse>>(`/notes?page=${page}&size=20`);
+  return data;
+}
