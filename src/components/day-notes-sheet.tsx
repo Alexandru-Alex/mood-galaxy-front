@@ -69,9 +69,8 @@ export function DayNotesSheet({ date, onClose }: Props) {
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={close}>
-      <RNAnimated.View style={[styles.backdrop, { opacity: backdropAnim }]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} />
-      </RNAnimated.View>
+      <RNAnimated.View style={[styles.backdrop, { opacity: backdropAnim }]} pointerEvents="none" />
+      <Pressable style={StyleSheet.absoluteFill} onPress={close} />
       <RNAnimated.View style={[styles.sheet, { transform: [{ translateY: sheetAnim }] }]}>
         <View style={styles.handle} />
         <Text style={styles.dateHeader}>{formattedDate}</Text>
