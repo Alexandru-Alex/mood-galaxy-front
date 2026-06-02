@@ -294,7 +294,9 @@ export const ConstellationGroup = React.memo(
     prev.entries[0]?.entryIndex === next.entries[0]?.entryIndex &&
     prev.seed === next.seed &&
     prev.startYear === next.startYear &&
-    prev.active === next.active,
+    prev.active === next.active &&
+    prev.centerOverride?.angle === next.centerOverride?.angle &&
+    prev.centerOverride?.radius === next.centerOverride?.radius,
 );
 
 const styles = StyleSheet.create({
