@@ -8,7 +8,7 @@ const DEFAULT_HOUR = 20;
 const CHANNEL_ID = 'daily-reminder';
 
 if (Platform.OS === 'android') {
-  Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+  void Notifications.setNotificationChannelAsync(CHANNEL_ID, {
     name: 'Daily Reminder',
     importance: Notifications.AndroidImportance.DEFAULT,
   });
