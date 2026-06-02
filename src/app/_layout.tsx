@@ -3,8 +3,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import { LogBox, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+// Known expo-router bug: useLinking resolves the initial URL async and tries to
+// update ContextNavigator state before React finishes mounting it. Dev-only, no
+// runtime impact. https://github.com/expo/expo/issues/useLinking-race
+LogBox.ignoreLogs(["Can't perform a React state update on a component that hasn't mounted yet"]);
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AudioProvider } from '@/context/audio-context';
 import { getStoredToken } from '@/lib/api';
