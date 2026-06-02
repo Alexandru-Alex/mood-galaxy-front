@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, Polyline, RadialGradient, Stop } from 'react-native-svg';
 import Animated, {
@@ -10,6 +10,7 @@ import Animated, {
   withSequence,
   interpolate,
   Extrapolation,
+  cancelAnimation,
   type SharedValue,
 } from 'react-native-reanimated';
 
@@ -137,18 +138,21 @@ type Props = {
   scale: SharedValue<number>;
   centerOverride?: { angle: number; radius: number };
   onStarPress?: (date: string) => void;
+  active?: boolean;
 };
 
-export function ConstellationGroup({
-  seed,
-  constellationId,
-  entries,
-  startYear,
-  view,
-  scale,
-  centerOverride,
-  onStarPress,
-}: Props) {
+export const ConstellationGroup = React.memo(
+  function ConstellationGroup({
+    seed,
+    constellationId,
+    entries,
+    startYear,
+    view,
+    scale,
+    centerOverride,
+    onStarPress,
+    active = true,
+  }: Props) {
   const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
   const centerDate = sorted.length > 0 ? sorted[0].date : new Date().toISOString().slice(0, 10);
 
@@ -177,6 +181,10 @@ export function ConstellationGroup({
 
   const dotPulse = useSharedValue(1);
   useEffect(() => {
+    if (!active) {
+      cancelAnimation(dotPulse);
+      return;
+    }
     dotPulse.value = withRepeat(
       withSequence(
         withTiming(1.5, { duration: 1100 }),
@@ -185,8 +193,7 @@ export function ConstellationGroup({
       -1,
       false,
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [active, dotPulse]);
 
   const dotPulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: dotPulse.value }],
@@ -279,7 +286,13 @@ export function ConstellationGroup({
       </Animated.View>
     </View>
   );
-}
+  },
+  (prev, next) =>
+    prev.constellationId === next.constellationId &&
+    prev.entries.length === next.entries.length &&
+    prev.seed === next.seed &&
+    prev.startYear === next.startYear,
+);
 
 const styles = StyleSheet.create({
   starWrap: {
