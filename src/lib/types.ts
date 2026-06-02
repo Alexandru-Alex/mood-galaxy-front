@@ -28,3 +28,9 @@ export type JournalNoteResponse = {
   content: string | null;
   createdAt: string;
 };
+
+/** Response item from GET /entries/months. */
+export type MonthSummary = {
+  month: string;           // "YYYY-MM"
+  constellationIds: string[]; // e.g. ["c0", "c1"]
+};
