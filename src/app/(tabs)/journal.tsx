@@ -26,19 +26,20 @@ type DaySection = {
 };
 
 function formatSectionTitle(dateStr: string): string {
-  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const yd = new Date();
   yd.setDate(yd.getDate() - 1);
-  const yesterday = yd.toISOString().slice(0, 10);
-  if (dateStr === today) return 'Azi';
-  if (dateStr === yesterday) return 'Ieri';
+  const yesterdayLocal = `${yd.getFullYear()}-${String(yd.getMonth() + 1).padStart(2, '0')}-${String(yd.getDate()).padStart(2, '0')}`;
+  if (dateStr === todayLocal) return 'Azi';
+  if (dateStr === yesterdayLocal) return 'Ieri';
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('ro-RO', {
     day: 'numeric',
     month: 'short',
   });
 }
 
-export default function JurnalScreen() {
+export default function JournalScreen() {
   const insets = useSafeAreaInsets();
   const sectionListRef = useRef<SectionList<JournalNoteResponse, DaySection>>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -137,6 +138,7 @@ export default function JurnalScreen() {
             if (hasNextPage && !isFetchingNextPage) fetchNextPage();
           }}
           onEndReachedThreshold={0.3}
+          onScrollToIndexFailed={() => {}}
           ListFooterComponent={
             isFetchingNextPage ? (
               <ActivityIndicator
