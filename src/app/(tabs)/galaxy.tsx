@@ -39,11 +39,15 @@ export default function GalaxyScreen() {
     (async () => {
       const summary = await fetchMonthSummary();
       const skeleton = new Map<string, Entry[]>();
+      // summary is sorted ascending — first occurrence of a cId is its earliest (correct) month.
+      // A constellation that straddles two months must only be assigned to the first month,
+      // otherwise assignPositions() would place it in the wrong ring after real entries load.
+      const seenIds = new Set<string>();
       for (const { month, constellationIds } of summary) {
         const skeletonDate = `${month}-01`;
         for (const cId of constellationIds) {
-          // Placeholder entry: entryIndex -1 fills no slot (all ghost stars),
-          // but gives assignPositions() a date to compute the ring position.
+          if (seenIds.has(cId)) continue;
+          seenIds.add(cId);
           skeleton.set(cId, [{ entryIndex: -1, date: skeletonDate, mood: 'NEUTRAL' as const }]);
           constellationToMonth.current.set(cId, month);
         }
