@@ -291,7 +291,8 @@ export const ConstellationGroup = React.memo(
     prev.constellationId === next.constellationId &&
     prev.entries.length === next.entries.length &&
     prev.seed === next.seed &&
-    prev.startYear === next.startYear,
+    prev.startYear === next.startYear &&
+    prev.active === next.active,
 );
 
 const styles = StyleSheet.create({

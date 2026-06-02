@@ -1,5 +1,5 @@
 import { createAudioPlayer, setAudioModeAsync, AudioPlayer } from 'expo-audio';
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
 type AudioContextValue = {
@@ -17,6 +17,11 @@ const AudioContext = createContext<AudioContextValue>({
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const playerRef = useRef<AudioPlayer | null>(null);
   const [isMuted, setIsMuted] = useState(false);
+  const isMutedRef = useRef(false);
+
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
 
   useEffect(() => {
     if (Platform.OS === 'web') return;
@@ -32,7 +37,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
         player = createAudioPlayer(require('../../assets/audio/meditation.mp3'));
         player.loop = true;
-        player.volume = 1;
+        player.volume = isMutedRef.current ? 0 : 1;
         player.play();
         playerRef.current = player;
       } catch {}
@@ -55,12 +60,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const setMuted = (val: boolean) => {
+  const setMuted = useCallback((val: boolean) => {
     setIsMuted(val);
     if (playerRef.current) {
       playerRef.current.volume = val ? 0 : 1;
     }
-  };
+  }, []);
 
   return (
     <AudioContext.Provider value={{ isMuted, toggleMute, setMuted }}>

@@ -64,7 +64,7 @@ export default function YouScreen() {
       setSoundEnabled(account.sound);
       setMuted(!account.sound);
     }
-  }, [account?.sound]);
+  }, [account?.sound, setMuted]);
 
   useEffect(() => {
     if (Platform.OS !== 'web') getSavedHour().then(setNotifHour);
@@ -101,6 +101,10 @@ export default function YouScreen() {
   const { mutate: updateSound, isPending: savingSound } = useMutation({
     mutationFn: (sound: boolean) => api.patch('/accounts', { sound }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ACCOUNT_QUERY_KEY }),
+    onError: (_err, sound) => {
+      setSoundEnabled(!sound);
+      setMuted(sound);
+    },
   });
 
   const { mutate: deleteAccount, isPending: deletingAccount } = useMutation({
