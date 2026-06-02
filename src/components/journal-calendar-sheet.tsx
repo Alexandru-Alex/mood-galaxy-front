@@ -41,6 +41,8 @@ export function JournalCalendarSheet({ visible, onClose, onDateSelect, loadedDat
 
   useEffect(() => {
     if (!visible) return;
+    backdropAnim.stopAnimation();
+    sheetAnim.stopAnimation();
     backdropAnim.setValue(0);
     sheetAnim.setValue(400);
     RNAnimated.parallel([
@@ -78,7 +80,7 @@ export function JournalCalendarSheet({ visible, onClose, onDateSelect, loadedDat
     onDateSelect(dateStr);
   };
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const grid = getMonthGrid(viewYear, viewMonth);
 
   return (
