@@ -26,7 +26,8 @@ export async function fetchAllEntries(): Promise<JournalNoteResponse[]> {
   return [];
 }
 
+const PAGE_SIZE = 20;
+
 export async function fetchNotesPage(page: number): Promise<PageResponse<JournalNoteResponse>> {
-  const data = await api.get<PageResponse<JournalNoteResponse>>(`/notes?page=${page}&size=20`);
-  return data;
+  return api.get<PageResponse<JournalNoteResponse>>(`/notes?page=${page}&size=${PAGE_SIZE}`);
 }
