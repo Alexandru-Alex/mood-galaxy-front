@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useFocusEffect } from 'expo-router';
 
 import { GalaxyView } from '@/components/galaxy-view';
 import { SpaceBackground } from '@/components/space-background';
@@ -31,6 +32,43 @@ export default function GalaxyScreen() {
   const constellationToMonth = useRef(new Map<string, string>());
   const allSummaryMonths = useRef<string[]>([]);
   const initialLoadFired = useRef(false);
+
+  const [focused, setFocused] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      setFocused(true);
+      return () => setFocused(false);
+    }, []),
+  );
+
+  const pendingUpdates = useRef(new Map<string, Entry[]>());
+  const batchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (batchTimer.current) clearTimeout(batchTimer.current);
+    };
+  }, []);
+
+  const flushPendingUpdates = useCallback(() => {
+    const snapshot = new Map(pendingUpdates.current);
+    pendingUpdates.current.clear();
+    batchTimer.current = null;
+
+    setGroups((prev) => {
+      const next = new Map(prev);
+      for (const [cId, newEntries] of snapshot) {
+        const existing = (next.get(cId) ?? []).filter((e) => e.entryIndex >= 0);
+        const merged = [...existing, ...newEntries];
+        const deduped = [
+          ...new Map(merged.map((e) => [e.entryIndex, e])).values(),
+        ].sort((a, b) => a.entryIndex - b.entryIndex);
+        next.set(cId, deduped);
+      }
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     getStoredSeed()
@@ -73,20 +111,13 @@ export default function GalaxyScreen() {
       fetchEntriesByMonth(month)
         .then((entries) => {
           const incoming = groupByConstellation(entries);
-          setGroups((prev) => {
-            const next = new Map(prev);
-            for (const [cId, newEntries] of incoming) {
-              // Remove placeholders, merge with any real entries already in this constellation
-              const existing = (next.get(cId) ?? []).filter((e) => e.entryIndex >= 0);
-              const merged = [...existing, ...newEntries];
-              // Deduplicate by entryIndex (cross-month constellations can arrive twice)
-              const deduped = [
-                ...new Map(merged.map((e) => [e.entryIndex, e])).values(),
-              ].sort((a, b) => a.entryIndex - b.entryIndex);
-              next.set(cId, deduped);
-            }
-            return next;
-          });
+          for (const [cId, newEntries] of incoming) {
+            const existing = pendingUpdates.current.get(cId) ?? [];
+            pendingUpdates.current.set(cId, [...existing, ...newEntries]);
+          }
+          if (!batchTimer.current) {
+            batchTimer.current = setTimeout(flushPendingUpdates, 0);
+          }
           loadedMonths.current.add(month);
           pendingMonths.current.delete(month);
         })
@@ -94,7 +125,7 @@ export default function GalaxyScreen() {
           setTimeout(() => pendingMonths.current.delete(month), 5000);
         });
     }
-  }, []);
+  }, [flushPendingUpdates]);
 
   // Fire initial load once skeleton is populated (without needing user to pan first)
   useEffect(() => {
@@ -103,19 +134,20 @@ export default function GalaxyScreen() {
     // Use all months from summary, not just months where a constellation starts.
     // A month with only cross-boundary entries (trailing slots of a constellation
     // that started in a prior month) would otherwise never be fetched.
-    handleVisibleMonthsChange(allSummaryMonths.current);
+    handleVisibleMonthsChange(allSummaryMonths.current.slice(-3));
   }, [groups.size, handleVisibleMonthsChange]);
 
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
       <SpaceBackground />
-      <Starfield />
+      <Starfield active={focused} />
       <GalaxyView
         seed={seed}
         groups={groups}
         startYear={startYear}
         onVisibleMonthsChange={handleVisibleMonthsChange}
+        active={focused}
       />
     </View>
   );
