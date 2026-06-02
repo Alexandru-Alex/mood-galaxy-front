@@ -144,12 +144,13 @@ type Props = {
   groups: Map<string, Entry[]>;
   startYear: number;
   onVisibleMonthsChange?: (months: string[]) => void;
+  active?: boolean;
 };
 
-export function GalaxyView({ seed, groups, startYear, onVisibleMonthsChange }: Props) {
+export function GalaxyView({ seed, groups, startYear, onVisibleMonthsChange, active = true }: Props) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const view = { centerX: width / 2, centerY: height / 2, zoom: 1 };
+  const view = useMemo(() => ({ centerX: width / 2, centerY: height / 2, zoom: 1 }), [width, height]);
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -296,12 +297,15 @@ export function GalaxyView({ seed, groups, startYear, onVisibleMonthsChange }: P
     setCull({ tx: -latest.cx, ty: -latest.cy, s: 1 });
   };
 
-  // Only render constellations within the visible viewport (+margin)
-  const visibleGroups = [...groups.entries()].filter(([cId]) => {
-    const pos = positions.get(cId);
-    if (!pos) return false;
-    return isVisible(pos.cx, pos.cy, cull, width, height);
-  });
+  const visibleGroups = useMemo(
+    () =>
+      [...groups.entries()].filter(([cId]) => {
+        const pos = positions.get(cId);
+        if (!pos) return false;
+        return isVisible(pos.cx, pos.cy, cull, width, height);
+      }),
+    [groups, positions, cull, width, height],
+  );
 
   return (
     <View style={StyleSheet.absoluteFill}>
@@ -321,6 +325,7 @@ export function GalaxyView({ seed, groups, startYear, onVisibleMonthsChange }: P
                 view={view}
                 scale={scale}
                 centerOverride={positions.get(cId)}
+                active={active}
               />
             ))}
           </Animated.View>
