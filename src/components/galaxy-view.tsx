@@ -58,9 +58,10 @@ function MonthGroupOverlay({ data, scale }: { data: MonthGroupData; scale: Share
         <Circle cx={auraRadius} cy={auraRadius} r={auraRadius} fill={`url(#${gradientId})`} />
       </Svg>
       <Text
+        numberOfLines={1}
         style={[
           styles.monthLabel,
-          { position: 'absolute', left: cx - 60, top: cy + auraRadius + 6, width: 120 },
+          { position: 'absolute', left: cx - 150, top: cy + auraRadius + 6, width: 300 },
         ]}
       >
         {label}
