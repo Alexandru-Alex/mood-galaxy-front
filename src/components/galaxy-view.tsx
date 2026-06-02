@@ -23,7 +23,7 @@ const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 3.0;
 const GALAXY_BASE_RADIUS = 700;
 const GALAXY_RING_GAP = 900;
-const CONSTELLATION_MIN_SPACING = 260; // px between centers (> constellation diameter ~240px)
+const CONSTELLATION_MIN_SPACING = 400; // px between centers (> constellation diameter ~240px)
 const GOLDEN_ANGLE = 2.39996; // ~137.5° — gives visually natural cluster rotations per month
 const CULL_MARGIN = 300;
 // Must match constellation-group.tsx thresholds

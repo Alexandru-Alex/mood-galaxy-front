@@ -1,47 +1,100 @@
-import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo, useRef, useState } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import {
   ActivityIndicator,
-  Pressable,
-  ScrollView,
+  SectionList,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MoodColors, Palette, Spacing } from '@/constants/theme';
-import { fetchAllEntries } from '@/lib/entries';
+import { Ionicons } from '@expo/vector-icons';
+import { Palette, Spacing } from '@/constants/theme';
+import { fetchNotesPage } from '@/lib/entries';
 import { DayNotesSheet } from '@/components/day-notes-sheet';
+import { JournalEntryRow } from '@/components/journal-entry-row';
+import { JournalCalendarSheet } from '@/components/journal-calendar-sheet';
 import { SpaceBackground } from '@/components/space-background';
 import type { JournalNoteResponse } from '@/lib/types';
 
-type DayGroup = { date: string; notes: JournalNoteResponse[] };
+type DaySection = {
+  date: string;
+  title: string;
+  data: JournalNoteResponse[];
+};
 
-export default function JurnalScreen() {
-  const insets = useSafeAreaInsets();
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-
-  const { data: notes = [], isLoading: loading } = useQuery({
-    queryKey: ['notes'],
-    queryFn: fetchAllEntries,
+function formatSectionTitle(dateStr: string): string {
+  const now = new Date();
+  const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const yd = new Date();
+  yd.setDate(yd.getDate() - 1);
+  const yesterdayLocal = `${yd.getFullYear()}-${String(yd.getMonth() + 1).padStart(2, '0')}-${String(yd.getDate()).padStart(2, '0')}`;
+  if (dateStr === todayLocal) return 'Azi';
+  if (dateStr === yesterdayLocal) return 'Ieri';
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('ro-RO', {
+    day: 'numeric',
+    month: 'short',
   });
+}
 
-  const groups = useMemo<DayGroup[]>(() => {
+export default function JournalScreen() {
+  const insets = useSafeAreaInsets();
+  const sectionListRef = useRef<SectionList<JournalNoteResponse, DaySection>>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [calendarVisible, setCalendarVisible] = useState(false);
+
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useInfiniteQuery({
+      queryKey: ['notes'],
+      queryFn: ({ pageParam = 0 }) => fetchNotesPage(pageParam as number),
+      getNextPageParam: (lastPage) =>
+        lastPage.last ? undefined : lastPage.number + 1,
+    });
+
+  const sections = useMemo<DaySection[]>(() => {
+    const allNotes = data?.pages.flatMap((p) => p.content) ?? [];
     const map = new Map<string, JournalNoteResponse[]>();
-    for (const note of notes) {
+    for (const note of allNotes) {
       if (!note?.createdAt) continue;
       const date = note.createdAt.slice(0, 10);
       if (!map.has(date)) map.set(date, []);
       map.get(date)!.push(note);
     }
     for (const list of map.values()) {
-      list.sort((a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? ''));
+      list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     }
     return [...map.entries()]
       .sort(([a], [b]) => b.localeCompare(a))
-      .map(([date, noteList]) => ({ date, notes: noteList }));
-  }, [notes]);
+      .map(([date, notes]) => ({
+        date,
+        title: formatSectionTitle(date),
+        data: notes,
+      }));
+  }, [data]);
+
+  const loadedDates = useMemo(
+    () => new Set(sections.map((s) => s.date)),
+    [sections]
+  );
+
+  const handleDateSelect = (date: string) => {
+    const sectionIndex = sections.findIndex((s) => s.date === date);
+    if (sectionIndex !== -1 && sectionListRef.current) {
+      requestAnimationFrame(() => {
+        sectionListRef.current?.scrollToLocation({
+          sectionIndex,
+          itemIndex: 0,
+          animated: true,
+          viewOffset: 8,
+        });
+      });
+    } else {
+      // Date not yet paginated — open DayNotesSheet directly
+      setSelectedDate(date);
+    }
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -49,51 +102,64 @@ export default function JurnalScreen() {
       <SpaceBackground />
       <View style={styles.header}>
         <Text style={styles.title}>Journal</Text>
+        <TouchableOpacity
+          onPress={() => setCalendarVisible(true)}
+          hitSlop={12}
+        >
+          <Ionicons name="calendar-outline" size={22} color={Palette.brightLavender} />
+        </TouchableOpacity>
       </View>
-      {loading ? (
+
+      {isLoading ? (
         <ActivityIndicator color={Palette.brightLavender} style={styles.spinner} />
-      ) : groups.length === 0 ? (
-        <Text style={styles.emptyText}>No entries yet</Text>
+      ) : sections.length === 0 ? (
+        <Text style={styles.emptyText}>Nicio intrare încă</Text>
       ) : (
-        <ScrollView contentContainerStyle={styles.listContent} indicatorStyle="white">
-          {groups.map(({ date, notes }) => (
-            <View key={date} style={styles.group}>
-              <Text style={styles.groupHeader}>
-                {new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
+        <SectionList
+          ref={sectionListRef}
+          sections={sections}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item, section }) => (
+            <JournalEntryRow
+              note={item}
+              onPress={() => setSelectedDate(section.date)}
+            />
+          )}
+          renderSectionHeader={({ section }) => (
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{section.title}</Text>
+              <Text style={styles.sectionCount}>
+                {section.data.length}{' '}
+                {section.data.length === 1 ? 'intrare' : 'intrări'}
               </Text>
-              {notes.map((note) => (
-                <Pressable
-                  key={note.id}
-                  style={styles.noteItem}
-                  onPress={() => setSelectedDate(date)}
-                >
-                  <View style={[styles.moodCircle, { backgroundColor: MoodColors[note.mood] }]} />
-                  <View style={styles.noteContent}>
-                    <Text style={styles.metaText}>
-                      {note.mood.charAt(0) + note.mood.slice(1).toLowerCase()} ·{' '}
-                      {new Date(note.createdAt).toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </Text>
-                    {note.content ? (
-                      <Text style={styles.contentText} numberOfLines={2}>
-                        {note.content}
-                      </Text>
-                    ) : null}
-                  </View>
-                </Pressable>
-              ))}
             </View>
-          ))}
-        </ScrollView>
+          )}
+          contentContainerStyle={styles.listContent}
+          stickySectionHeadersEnabled={false}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+          }}
+          onEndReachedThreshold={0.3}
+          onScrollToIndexFailed={() => {}}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <ActivityIndicator
+                color={Palette.brightLavender}
+                style={styles.footer}
+              />
+            ) : null
+          }
+          indicatorStyle="white"
+        />
       )}
+
       <DayNotesSheet date={selectedDate} onClose={() => setSelectedDate(null)} />
+      <JournalCalendarSheet
+        visible={calendarVisible}
+        onClose={() => setCalendarVisible(false)}
+        onDateSelect={handleDateSelect}
+        loadedDates={loadedDates}
+      />
     </View>
   );
 }
@@ -104,6 +170,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#050410',
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: Spacing.four,
     paddingVertical: 16,
   },
@@ -126,43 +195,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingBottom: 40,
   },
-  group: {
-    marginBottom: 24,
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    paddingTop: 16,
+    paddingBottom: 6,
   },
-  groupHeader: {
+  sectionTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: Palette.brightLavender,
-    letterSpacing: 0.4,
-    textTransform: 'capitalize',
-    marginBottom: 8,
+    color: '#ffffff',
   },
-  noteItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
-    gap: 12,
+  sectionCount: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.35)',
   },
-  moodCircle: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginTop: 3,
-  },
-  noteContent: {
-    flex: 1,
-  },
-  metaText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)',
-  },
-  contentText: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.55)',
-    marginTop: 3,
-    lineHeight: 19,
+  footer: {
+    marginVertical: 16,
   },
 });

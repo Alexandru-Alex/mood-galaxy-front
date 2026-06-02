@@ -36,3 +36,9 @@ export async function fetchEntriesByMonth(month: string): Promise<Entry[]> {
   if (!Array.isArray(data)) return [];
   return toEntries(data);
 }
+
+const PAGE_SIZE = 20;
+
+export async function fetchNotesPage(page: number): Promise<PageResponse<JournalNoteResponse>> {
+  return api.get<PageResponse<JournalNoteResponse>>(`/notes?page=${page}&size=${PAGE_SIZE}`);
+}
