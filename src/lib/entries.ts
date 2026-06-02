@@ -25,3 +25,14 @@ export async function fetchAllEntries(): Promise<JournalNoteResponse[]> {
   console.warn('[fetchAllEntries] unexpected response shape', data);
   return [];
 }
+
+export async function fetchMonthSummary(): Promise<import('./types').MonthSummary[]> {
+  const data = await api.get<import('./types').MonthSummary[]>('/entries/months');
+  return Array.isArray(data) ? data : [];
+}
+
+export async function fetchEntriesByMonth(month: string): Promise<Entry[]> {
+  const data = await api.get<BackendEntry[]>(`/entries/by-month/${month}`);
+  if (!Array.isArray(data)) return [];
+  return toEntries(data);
+}
