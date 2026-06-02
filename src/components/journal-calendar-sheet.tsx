@@ -20,10 +20,10 @@ type Props = {
 };
 
 const MONTH_NAMES = [
-  'Ianuarie', 'Februarie', 'Martie', 'Aprilie', 'Mai', 'Iunie',
-  'Iulie', 'August', 'Septembrie', 'Octombrie', 'Noiembrie', 'Decembrie',
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
 ];
-const DAY_NAMES = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const DAY_NAMES = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
 function getMonthGrid(year: number, month: number): (number | null)[] {
   const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Mon=0 Sun=6

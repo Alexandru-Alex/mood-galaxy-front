@@ -31,9 +31,9 @@ function formatSectionTitle(dateStr: string): string {
   const yd = new Date();
   yd.setDate(yd.getDate() - 1);
   const yesterdayLocal = `${yd.getFullYear()}-${String(yd.getMonth() + 1).padStart(2, '0')}-${String(yd.getDate()).padStart(2, '0')}`;
-  if (dateStr === todayLocal) return 'Azi';
-  if (dateStr === yesterdayLocal) return 'Ieri';
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('ro-RO', {
+  if (dateStr === todayLocal) return 'Today';
+  if (dateStr === yesterdayLocal) return 'Yesterday';
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
     day: 'numeric',
     month: 'short',
   });
@@ -113,7 +113,7 @@ export default function JournalScreen() {
       {isLoading ? (
         <ActivityIndicator color={Palette.brightLavender} style={styles.spinner} />
       ) : sections.length === 0 ? (
-        <Text style={styles.emptyText}>Nicio intrare încă</Text>
+        <Text style={styles.emptyText}>No entries yet</Text>
       ) : (
         <SectionList
           ref={sectionListRef}
@@ -130,7 +130,7 @@ export default function JournalScreen() {
               <Text style={styles.sectionTitle}>{section.title}</Text>
               <Text style={styles.sectionCount}>
                 {section.data.length}{' '}
-                {section.data.length === 1 ? 'intrare' : 'intrări'}
+                {section.data.length === 1 ? 'entry' : 'entries'}
               </Text>
             </View>
           )}
