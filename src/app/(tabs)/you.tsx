@@ -20,7 +20,7 @@ import {
 import { BottomTabInset, Palette, Spacing } from '@/constants/theme';
 import { SpaceBackground } from '@/components/space-background';
 import { Starfield } from '@/components/starfield';
-import { useAudio } from '@/context/audio-context';
+import { useAudio, persistSoundEnabled } from '@/context/audio-context';
 
 export default function YouScreen() {
   const [showNameModal, setShowNameModal] = useState(false);
@@ -63,6 +63,7 @@ export default function YouScreen() {
     if (account?.sound !== undefined) {
       setSoundEnabled(account.sound);
       setMuted(!account.sound);
+      void persistSoundEnabled(account.sound);
     }
   }, [account?.sound, setMuted]);
 

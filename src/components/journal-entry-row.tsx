@@ -2,15 +2,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Mood, MoodColors, Spacing } from '@/constants/theme';
 import type { JournalNoteResponse } from '@/lib/types';
 
-const MOOD_EMOJI: Record<Mood, string> = {
-  JOYFUL: '😊',
-  CALM: '😌',
-  NEUTRAL: '😐',
-  ANXIOUS: '😰',
-  SAD: '😢',
-  ANGRY: '😠',
-};
-
 type Props = {
   note: JournalNoteResponse;
   onPress: () => void;
@@ -18,7 +9,6 @@ type Props = {
 
 export function JournalEntryRow({ note, onPress }: Props) {
   const color = MoodColors[note.mood];
-  const emoji = MOOD_EMOJI[note.mood] ?? '●';
   const label = note.mood.charAt(0) + note.mood.slice(1).toLowerCase();
   const time = new Date(note.createdAt).toLocaleTimeString('ro-RO', {
     hour: '2-digit',
@@ -28,7 +18,7 @@ export function JournalEntryRow({ note, onPress }: Props) {
   return (
     <Pressable style={styles.row} onPress={onPress}>
       <View style={[styles.badge, { backgroundColor: color + '33' }]}>
-        <Text style={[styles.badgeText, { color }]}>{emoji} {label}</Text>
+        <Text style={[styles.badgeText, { color }]}>{label}</Text>
       </View>
       {note.content ? (
         <Text style={styles.preview} numberOfLines={1}>{note.content}</Text>

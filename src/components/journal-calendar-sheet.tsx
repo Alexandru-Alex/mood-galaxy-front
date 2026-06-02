@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Palette, Spacing } from '@/constants/theme';
@@ -24,12 +25,14 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 const DAY_NAMES = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+const SWIPE_THRESHOLD = 40;
 
 function getMonthGrid(year: number, month: number): (number | null)[] {
   const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Mon=0 Sun=6
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const grid: (number | null)[] = Array(firstDow).fill(null);
   for (let d = 1; d <= daysInMonth; d++) grid.push(d);
+  while (grid.length < 42) grid.push(null);
   return grid;
 }
 
@@ -75,12 +78,20 @@ export function JournalCalendarSheet({ visible, onClose, onDateSelect, loadedDat
   };
 
   const handleDayPress = (dateStr: string) => {
-    // Dismiss immediately (no animation) so the next action renders cleanly
     backdropAnim.setValue(0);
     sheetAnim.setValue(400);
     onClose();
     onDateSelect(dateStr);
   };
+
+  const swipeGesture = Gesture.Pan()
+    .runOnJS(true)
+    .activeOffsetX([-SWIPE_THRESHOLD, SWIPE_THRESHOLD])
+    .failOffsetY([-20, 20])
+    .onEnd((e) => {
+      if (e.translationX < -SWIPE_THRESHOLD) nextMonth();
+      else if (e.translationX > SWIPE_THRESHOLD) prevMonth();
+    });
 
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const grid = getMonthGrid(viewYear, viewMonth);
@@ -101,29 +112,35 @@ export function JournalCalendarSheet({ visible, onClose, onDateSelect, loadedDat
             <Ionicons name="chevron-forward" size={20} color={Palette.brightLavender} />
           </TouchableOpacity>
         </View>
-        <View style={styles.grid}>
-          {DAY_NAMES.map((d, i) => (
-            <Text key={`dn-${i}`} style={styles.dayName}>{d}</Text>
-          ))}
-          {grid.map((day, i) => {
-            if (day === null) return <View key={`empty-${i}`} style={styles.cell} />;
-            const mm = String(viewMonth + 1).padStart(2, '0');
-            const dd = String(day).padStart(2, '0');
-            const dateStr = `${viewYear}-${mm}-${dd}`;
-            const hasEntry = loadedDates.has(dateStr);
-            const isToday = dateStr === today;
-            return (
-              <TouchableOpacity
-                key={dateStr}
-                style={[styles.cell, isToday && styles.todayCell]}
-                onPress={() => handleDayPress(dateStr)}
-              >
-                <Text style={[styles.dayNum, isToday && styles.todayNum]}>{day}</Text>
-                {hasEntry && <View style={styles.dot} />}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        <GestureDetector gesture={swipeGesture}>
+          <View style={styles.gridWrapper}>
+            <View style={styles.dayNamesRow}>
+              {DAY_NAMES.map((d, i) => (
+                <Text key={`dn-${i}`} style={styles.dayName}>{d}</Text>
+              ))}
+            </View>
+            <View style={styles.grid}>
+              {grid.map((day, i) => {
+                if (day === null) return <View key={`empty-${i}`} style={styles.cell} />;
+                const mm = String(viewMonth + 1).padStart(2, '0');
+                const dd = String(day).padStart(2, '0');
+                const dateStr = `${viewYear}-${mm}-${dd}`;
+                const hasEntry = loadedDates.has(dateStr);
+                const isToday = dateStr === today;
+                return (
+                  <TouchableOpacity
+                    key={dateStr}
+                    style={[styles.cell, isToday && styles.todayCell]}
+                    onPress={() => handleDayPress(dateStr)}
+                  >
+                    <Text style={[styles.dayNum, isToday && styles.todayNum]}>{day}</Text>
+                    {hasEntry && <View style={styles.dot} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </GestureDetector>
       </RNAnimated.View>
     </Modal>
   );
@@ -158,16 +175,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   monthLabel: {
     fontSize: 15,
     fontWeight: '700',
     color: '#ffffff',
   },
-  grid: {
+  gridWrapper: {
+    // explicit container so GestureDetector has a measurable hit area
+  },
+  dayNamesRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    marginBottom: 4,
   },
   dayName: {
     width: '14.28%',
@@ -175,12 +195,16 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: 'rgba(255,255,255,0.3)',
-    marginBottom: 8,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   cell: {
     width: '14.28%',
+    height: 36,
     alignItems: 'center',
-    paddingVertical: 6,
+    justifyContent: 'center',
   },
   todayCell: {
     backgroundColor: Palette.majorelleBlue + '33',

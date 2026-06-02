@@ -1,6 +1,14 @@
 import { createAudioPlayer, setAudioModeAsync, AudioPlayer } from 'expo-audio';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
+
+const SOUND_KEY = 'sound_enabled';
+
+export async function persistSoundEnabled(val: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  await SecureStore.setItemAsync(SOUND_KEY, String(val));
+}
 
 type AudioContextValue = {
   isMuted: boolean;
@@ -33,11 +41,14 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     idleHandle = requestIdleCallback(async () => {
       if (cancelled) return;
       try {
+        const stored = await SecureStore.getItemAsync(SOUND_KEY);
+        const startMuted = stored === 'false';
+        if (startMuted) setIsMuted(true);
         await setAudioModeAsync({ playsInSilentMode: true });
         if (cancelled) return;
         player = createAudioPlayer(require('../../assets/audio/meditation.mp3'));
         player.loop = true;
-        player.volume = isMutedRef.current ? 0 : 1;
+        player.volume = startMuted ? 0 : 1;
         player.play();
         playerRef.current = player;
       } catch {}
