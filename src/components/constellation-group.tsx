@@ -49,8 +49,8 @@ function FilledStar({ x, y, mood, onPress }: Point & { mood: Mood; onPress?: () 
     transform: [{ scale: scale.value }],
   }));
 
-  const lx = Math.round(x - HALO / 2);
-  const ly = Math.round(y - HALO / 2);
+  const lx = x - HALO / 2;
+  const ly = y - HALO / 2;
 
   if (!onPress) {
     return (
@@ -77,7 +77,7 @@ function FilledStar({ x, y, mood, onPress }: Point & { mood: Mood; onPress?: () 
 
 function GhostStar({ x, y }: Point) {
   return (
-    <View style={[styles.starWrap, { left: Math.round(x - HALO / 2), top: Math.round(y - HALO / 2) }]}>
+    <View style={[styles.starWrap, { left: x - HALO / 2, top: y - HALO / 2 }]}>
       <View style={styles.ghost} />
     </View>
   );
