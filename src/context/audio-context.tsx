@@ -5,11 +5,13 @@ import { Platform } from 'react-native';
 type AudioContextValue = {
   isMuted: boolean;
   toggleMute: () => void;
+  setMuted: (val: boolean) => void;
 };
 
 const AudioContext = createContext<AudioContextValue>({
   isMuted: false,
   toggleMute: () => {},
+  setMuted: () => {},
 });
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
@@ -53,8 +55,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const setMuted = (val: boolean) => {
+    setIsMuted(val);
+    if (playerRef.current) {
+      playerRef.current.volume = val ? 0 : 1;
+    }
+  };
+
   return (
-    <AudioContext.Provider value={{ isMuted, toggleMute }}>
+    <AudioContext.Provider value={{ isMuted, toggleMute, setMuted }}>
       {children}
     </AudioContext.Provider>
   );
