@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Palette, Spacing } from '@/constants/theme';
 
@@ -33,6 +34,7 @@ function getMonthGrid(year: number, month: number): (number | null)[] {
 }
 
 export function JournalCalendarSheet({ visible, onClose, onDateSelect, loadedDates }: Props) {
+  const insets = useSafeAreaInsets();
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
@@ -88,7 +90,7 @@ export function JournalCalendarSheet({ visible, onClose, onDateSelect, loadedDat
       <RNAnimated.View style={[styles.backdrop, { opacity: backdropAnim }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={close} />
       </RNAnimated.View>
-      <RNAnimated.View style={[styles.sheet, { transform: [{ translateY: sheetAnim }] }]}>
+      <RNAnimated.View style={[styles.sheet, { transform: [{ translateY: sheetAnim }], paddingBottom: Math.max(insets.bottom + 16, 40) }]}>
         <View style={styles.handle} />
         <View style={styles.monthRow}>
           <TouchableOpacity onPress={prevMonth} hitSlop={12}>
@@ -140,7 +142,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#12102A',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingBottom: 40,
     paddingHorizontal: Spacing.four,
   },
   handle: {

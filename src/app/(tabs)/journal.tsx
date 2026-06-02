@@ -82,11 +82,13 @@ export default function JournalScreen() {
   const handleDateSelect = (date: string) => {
     const sectionIndex = sections.findIndex((s) => s.date === date);
     if (sectionIndex !== -1 && sectionListRef.current) {
-      sectionListRef.current.scrollToLocation({
-        sectionIndex,
-        itemIndex: 0,
-        animated: true,
-        viewOffset: 8,
+      requestAnimationFrame(() => {
+        sectionListRef.current?.scrollToLocation({
+          sectionIndex,
+          itemIndex: 0,
+          animated: true,
+          viewOffset: 8,
+        });
       });
     } else {
       // Date not yet paginated — open DayNotesSheet directly
@@ -111,7 +113,7 @@ export default function JournalScreen() {
       {isLoading ? (
         <ActivityIndicator color={Palette.brightLavender} style={styles.spinner} />
       ) : sections.length === 0 ? (
-        <Text style={styles.emptyText}>No entries yet</Text>
+        <Text style={styles.emptyText}>Nicio intrare încă</Text>
       ) : (
         <SectionList
           ref={sectionListRef}
