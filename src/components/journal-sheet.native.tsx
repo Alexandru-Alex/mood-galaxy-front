@@ -3,6 +3,7 @@ import {
   Animated as RNAnimated,
   Dimensions,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -202,6 +203,12 @@ function MoodCircle({
           styles.circle,
           { backgroundColor: MoodColors[mood] },
           selected && styles.circleSelected,
+          selected && Platform.OS === 'ios' && {
+            shadowColor: MoodColors[mood],
+            shadowOffset: { width: 0, height: 0 },
+            shadowRadius: 12,
+            shadowOpacity: 1,
+          },
           animStyle,
         ]}
       />
@@ -218,9 +225,14 @@ const styles = StyleSheet.create({
   },
   sheet: {
     height: SHEET_HEIGHT,
-    backgroundColor: '#1a1438', // deep space sheet surface
+    backgroundColor: '#08061c',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    borderTopWidth: 1,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+    borderColor: 'rgba(171,129,205,0.2)',
   },
   handle: {
     width: 40,
@@ -292,12 +304,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   input: {
-    backgroundColor: 'rgba(87,74,226,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(171,129,205,0.3)',
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: 'rgba(171,129,205,0.55)',
     borderRadius: 12,
     padding: 12,
-    color: '#ffffff',
+    color: Palette.mauve,
     fontSize: 14,
     minHeight: 80,
     textAlignVertical: 'top',
@@ -313,6 +325,15 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     paddingVertical: 14,
     alignItems: 'center',
+    elevation: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: Palette.majorelleBlue,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 20,
+        shadowOpacity: 0.6,
+      },
+    }),
   },
   submitBtnDisabled: {
     opacity: 0.4,

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
 
 import { api, logout } from '@/lib/api';
-import { useTheme } from '@/hooks/use-theme';
 import { BottomTabInset, Palette, Spacing } from '@/constants/theme';
+import { SpaceBackground } from '@/components/space-background';
+import { Starfield } from '@/components/starfield';
 
 type AccountDto = {
   id: string;
@@ -22,7 +24,6 @@ export default function YouScreen() {
   const [deletingAccount, setDeletingAccount] = useState(false);
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const theme = useTheme();
 
   useEffect(() => {
     api.get<AccountDto>('/accounts').then(setAccount).catch(console.error);
@@ -46,7 +47,11 @@ export default function YouScreen() {
   const stopPropWeb = Platform.OS === 'web' ? { onClick: (e: any) => e.stopPropagation() } : undefined;
 
   return (
-    <View style={[styles.root, { backgroundColor: theme.background }]}>
+    <View style={styles.root}>
+      <StatusBar style="light" />
+      <SpaceBackground />
+      <Starfield />
+
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[
@@ -55,28 +60,37 @@ export default function YouScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.profileCard, { backgroundColor: theme.backgroundElement }]}>
-          <Text style={[styles.displayName, { color: theme.text }]} numberOfLines={1}>
+        <View style={styles.profileCard}>
+          <View style={styles.profileNebula} pointerEvents="none" />
+          <View style={styles.avatarRing}>
+<Image
+              source={require('@/assets/images/astronaut-avatar.png')}
+              style={styles.avatarImage}
+              resizeMode="contain"
+            />
+          </View>
+          <Text style={styles.displayName} numberOfLines={1}>
             {account?.displayName ?? '—'}
           </Text>
-          <Text style={[styles.email, { color: theme.textSecondary }]} numberOfLines={1}>
+          <Text style={styles.email} numberOfLines={1}>
             {account?.email ?? '—'}
           </Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
-          <Text style={[styles.cardTitle, { color: theme.textSecondary }]}>Others</Text>
-          <View style={[styles.divider, { backgroundColor: theme.border }]} />
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Others</Text>
+          <View style={styles.divider} />
 
           <Pressable
             style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
             onPress={() => setShowLogoutModal(true)}
           >
-            <Ionicons name="log-out-outline" size={20} color={Palette.majorelleBlue} />
-            <Text style={[styles.rowLabel, { color: theme.text }]}>Log Out</Text>
+            <Ionicons name="log-out-outline" size={20} color={Palette.brightLavender} />
+            <Text style={styles.rowLabel}>Log Out</Text>
+            <Text style={styles.rowChevron}>›</Text>
           </Pressable>
 
-          <View style={[styles.divider, { backgroundColor: theme.border }]} />
+          <View style={styles.divider} />
 
           <Pressable
             style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
@@ -84,6 +98,7 @@ export default function YouScreen() {
           >
             <Ionicons name="trash-outline" size={20} color="#e74c3c" />
             <Text style={[styles.rowLabel, styles.dangerLabel]}>Delete Account</Text>
+            <Text style={styles.rowChevron}>›</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -95,17 +110,17 @@ export default function YouScreen() {
         onRequestClose={() => setShowLogoutModal(false)}
       >
         <Pressable style={styles.backdrop} onPress={() => setShowLogoutModal(false)}>
-          <Pressable style={[styles.modal, { backgroundColor: theme.backgroundElement }]} {...stopPropWeb}>
-            <Text style={[styles.modalTitle, { color: theme.text }]}>Log Out</Text>
-            <Text style={[styles.modalMessage, { color: theme.textSecondary }]}>
+          <Pressable style={styles.modal} {...stopPropWeb}>
+            <Text style={styles.modalTitle}>Log Out</Text>
+            <Text style={styles.modalMessage}>
               Are you sure you want to log out?
             </Text>
             <View style={styles.modalButtons}>
               <Pressable
-                style={({ pressed }) => [styles.btnCancel, { opacity: pressed ? 0.7 : 1, borderColor: theme.border }]}
+                style={({ pressed }) => [styles.btnCancel, { opacity: pressed ? 0.7 : 1 }]}
                 onPress={() => setShowLogoutModal(false)}
               >
-                <Text style={[styles.btnCancelLabel, { color: theme.text }]}>Cancel</Text>
+                <Text style={styles.btnCancelLabel}>Cancel</Text>
               </Pressable>
               <Pressable
                 style={({ pressed }) => [styles.btnPrimary, { opacity: pressed ? 0.7 : 1 }]}
@@ -125,17 +140,17 @@ export default function YouScreen() {
         onRequestClose={() => setShowDeleteModal(false)}
       >
         <Pressable style={styles.backdrop} onPress={() => setShowDeleteModal(false)}>
-          <Pressable style={[styles.modal, { backgroundColor: theme.backgroundElement }]} {...stopPropWeb}>
-            <Text style={[styles.modalTitle, { color: theme.text }]}>Delete Account</Text>
-            <Text style={[styles.modalMessage, { color: theme.textSecondary }]}>
+          <Pressable style={styles.modal} {...stopPropWeb}>
+            <Text style={styles.modalTitle}>Delete Account</Text>
+            <Text style={styles.modalMessage}>
               This will permanently delete your account and all data. This action cannot be undone.
             </Text>
             <View style={styles.modalButtons}>
               <Pressable
-                style={({ pressed }) => [styles.btnCancel, { opacity: pressed ? 0.7 : 1, borderColor: theme.border }]}
+                style={({ pressed }) => [styles.btnCancel, { opacity: pressed ? 0.7 : 1 }]}
                 onPress={() => setShowDeleteModal(false)}
               >
-                <Text style={[styles.btnCancelLabel, { color: theme.text }]}>Cancel</Text>
+                <Text style={styles.btnCancelLabel}>Cancel</Text>
               </Pressable>
               <Pressable
                 style={({ pressed }) => [styles.btnDanger, { opacity: pressed || deletingAccount ? 0.7 : 1 }]}
@@ -153,7 +168,10 @@ export default function YouScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  root: {
+    flex: 1,
+    backgroundColor: '#050410',
+  },
   scroll: { flex: 1 },
   scrollContent: {
     paddingHorizontal: Spacing.three,
@@ -162,84 +180,124 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     gap: Spacing.two,
   },
+
+  // Profile card
   profileCard: {
-    borderRadius: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(171,129,205,0.2)',
+    backgroundColor: '#08061c',
     paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.four,
+    paddingTop: Spacing.four,
+    paddingBottom: Spacing.four,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 2,
+    overflow: 'hidden',
+  },
+  profileNebula: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+    backgroundColor: 'rgba(87,74,226,0.12)',
+  },
+  avatarRing: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(87,74,226,0.2)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(171,129,205,0.45)',
+    marginBottom: 10,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarImage: {
+    width: 60,
+    height: 60,
+    marginTop: 16,
   },
   displayName: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#ffffff',
     marginBottom: 4,
   },
   email: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
+    color: Palette.brightLavender,
   },
+
+  // Card
   card: {
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(171,129,205,0.15)',
+    backgroundColor: '#08061c',
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two + 4,
     paddingBottom: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 2,
   },
   cardTitle: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 1,
+    color: Palette.brightLavender,
     marginBottom: Spacing.two,
   },
-  divider: { height: 1 },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(171,129,205,0.1)',
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 14,
     gap: 12,
   },
-  rowPressed: { opacity: 0.65 },
+  rowPressed: { opacity: 0.6 },
   rowLabel: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '500',
+    color: '#ffffff',
     flex: 1,
   },
+  rowChevron: {
+    fontSize: 18,
+    color: 'rgba(171,129,205,0.35)',
+  },
   dangerLabel: { color: '#e74c3c' },
+
+  // Modals
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(5,4,16,0.78)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: Spacing.four,
   },
   modal: {
-    borderRadius: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(171,129,205,0.2)',
+    backgroundColor: '#08061c',
     padding: Spacing.four,
     width: '100%',
     maxWidth: 360,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
+    color: '#ffffff',
     marginBottom: Spacing.two,
   },
   modalMessage: {
     fontSize: 14,
     lineHeight: 20,
+    color: Palette.brightLavender,
     marginBottom: Spacing.four,
   },
   modalButtons: {
@@ -250,12 +308,14 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 10,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderColor: 'rgba(171,129,205,0.4)',
     alignItems: 'center',
   },
   btnCancelLabel: {
     fontSize: 15,
     fontWeight: '600',
+    color: Palette.mauve,
   },
   btnPrimary: {
     flex: 1,
@@ -273,7 +333,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 10,
-    backgroundColor: '#e74c3c',
+    backgroundColor: '#c0392b',
     alignItems: 'center',
   },
   btnDangerLabel: {

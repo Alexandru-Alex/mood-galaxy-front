@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
-import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -245,7 +245,7 @@ export default function HomeScreen() {
           <Pressable
             style={styles.addBtn}
             onPress={() => bottomSheetRef.current?.present()}>
-            <Text style={styles.addBtnText}>+ How are you feeling</Text>
+            <Text style={styles.addBtnText}>✦ How are you feeling</Text>
           </Pressable>
         </View>
       </View>
@@ -304,16 +304,25 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 32,
-    backgroundColor: 'rgba(87, 74, 226, 0.85)',
-    borderWidth: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
     borderColor: Palette.brightLavender,
     alignItems: 'center',
     justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: Palette.brightLavender,
+        shadowOffset: { width: 0, height: 0 },
+        shadowRadius: 20,
+        shadowOpacity: 0.5,
+      },
+    }),
   },
   addBtnText: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#ffffff',
-    letterSpacing: 0.3,
+    color: Palette.mauve,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 });
