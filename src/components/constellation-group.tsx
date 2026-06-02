@@ -141,8 +141,7 @@ type Props = {
   active?: boolean;
 };
 
-export const ConstellationGroup = React.memo(
-  function ConstellationGroup({
+export function ConstellationGroup({
     seed,
     constellationId,
     entries,
@@ -287,17 +286,7 @@ export const ConstellationGroup = React.memo(
       </Animated.View>
     </View>
   );
-  },
-  (prev, next) =>
-    prev.constellationId === next.constellationId &&
-    prev.entries.length === next.entries.length &&
-    prev.entries[0]?.entryIndex === next.entries[0]?.entryIndex &&
-    prev.seed === next.seed &&
-    prev.startYear === next.startYear &&
-    prev.active === next.active &&
-    prev.centerOverride?.angle === next.centerOverride?.angle &&
-    prev.centerOverride?.radius === next.centerOverride?.radius,
-);
+}
 
 const styles = StyleSheet.create({
   starWrap: {
