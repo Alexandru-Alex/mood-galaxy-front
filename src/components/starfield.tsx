@@ -83,6 +83,7 @@ function StarGroup({ stars, active }: { stars: StarData[]; active: boolean }) {
     }
     const avgDelay = stars.reduce((s, st) => s + st.delay, 0) / stars.length;
     const avgDuration = stars.reduce((s, st) => s + st.duration, 0) / stars.length;
+    progress.value = 0;
     progress.value = withDelay(
       avgDelay,
       withRepeat(withTiming(1, { duration: avgDuration, easing: Easing.inOut(Easing.ease) }), -1, true),

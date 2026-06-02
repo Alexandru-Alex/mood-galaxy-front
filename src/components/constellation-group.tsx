@@ -185,6 +185,7 @@ export const ConstellationGroup = React.memo(
       cancelAnimation(dotPulse);
       return;
     }
+    dotPulse.value = 1;
     dotPulse.value = withRepeat(
       withSequence(
         withTiming(1.5, { duration: 1100 }),
