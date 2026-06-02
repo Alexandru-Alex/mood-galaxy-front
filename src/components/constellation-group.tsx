@@ -291,6 +291,7 @@ export const ConstellationGroup = React.memo(
   (prev, next) =>
     prev.constellationId === next.constellationId &&
     prev.entries.length === next.entries.length &&
+    prev.entries[0]?.entryIndex === next.entries[0]?.entryIndex &&
     prev.seed === next.seed &&
     prev.startYear === next.startYear &&
     prev.active === next.active,
