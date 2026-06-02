@@ -29,6 +29,7 @@ export default function GalaxyScreen() {
   const loadedMonths = useRef(new Set<string>());
   const pendingMonths = useRef(new Set<string>());
   const constellationToMonth = useRef(new Map<string, string>());
+  const allSummaryMonths = useRef<string[]>([]);
   const initialLoadFired = useRef(false);
 
   useEffect(() => {
@@ -39,6 +40,7 @@ export default function GalaxyScreen() {
     (async () => {
       const summary = await fetchMonthSummary();
       const skeleton = new Map<string, Entry[]>();
+      allSummaryMonths.current = summary.map((s) => s.month);
       // summary is sorted ascending — first occurrence of a cId is its earliest (correct) month.
       // A constellation that straddles two months must only be assigned to the first month,
       // otherwise assignPositions() would place it in the wrong ring after real entries load.
@@ -98,8 +100,10 @@ export default function GalaxyScreen() {
   useEffect(() => {
     if (groups.size === 0 || initialLoadFired.current) return;
     initialLoadFired.current = true;
-    const allMonths = [...new Set(constellationToMonth.current.values())];
-    handleVisibleMonthsChange(allMonths);
+    // Use all months from summary, not just months where a constellation starts.
+    // A month with only cross-boundary entries (trailing slots of a constellation
+    // that started in a prior month) would otherwise never be fetched.
+    handleVisibleMonthsChange(allSummaryMonths.current);
   }, [groups.size, handleVisibleMonthsChange]);
 
   return (
