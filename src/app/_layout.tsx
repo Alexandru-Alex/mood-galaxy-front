@@ -55,6 +55,8 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="galaxy" />
             <Stack.Screen name="auth" />
+            <Stack.Screen name="change-email" />
+            <Stack.Screen name="change-password" />
           </Stack>
         </ThemeProvider>
       </AudioProvider>
