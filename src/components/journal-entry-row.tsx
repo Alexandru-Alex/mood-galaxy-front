@@ -1,8 +1,8 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { MoodColors, Spacing } from '@/constants/theme';
+import { Mood, MoodColors, Spacing } from '@/constants/theme';
 import type { JournalNoteResponse } from '@/lib/types';
 
-const MOOD_EMOJI: Record<string, string> = {
+const MOOD_EMOJI: Record<Mood, string> = {
   JOYFUL: '😊',
   CALM: '😌',
   NEUTRAL: '😐',
