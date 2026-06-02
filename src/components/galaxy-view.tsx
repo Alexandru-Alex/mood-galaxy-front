@@ -16,6 +16,7 @@ import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { ConstellationGroup } from '@/components/constellation-group';
 import { MoodColors } from '@/constants/theme';
 import { blendMoodColors } from '@/lib/galaxyPositioning';
+import { getMonthsInBuffer } from '@/lib/galaxyBuffer';
 import type { Entry } from '@/lib/entries';
 
 const MIN_ZOOM = 0.3;
@@ -124,15 +125,16 @@ function isVisible(
   { tx, ty, s }: CullState,
   width: number,
   height: number,
+  margin = CULL_MARGIN,
 ): boolean {
   // Canvas point → screen: screenX = cx*s + width/2 + tx
   const screenX = cx * s + width / 2 + tx;
   const screenY = cy * s + height / 2 + ty;
   return (
-    screenX > -CULL_MARGIN &&
-    screenX < width + CULL_MARGIN &&
-    screenY > -CULL_MARGIN &&
-    screenY < height + CULL_MARGIN
+    screenX > -margin &&
+    screenX < width + margin &&
+    screenY > -margin &&
+    screenY < height + margin
   );
 }
 
@@ -140,9 +142,10 @@ type Props = {
   seed: number;
   groups: Map<string, Entry[]>;
   startYear: number;
+  onVisibleMonthsChange?: (months: string[]) => void;
 };
 
-export function GalaxyView({ seed, groups, startYear }: Props) {
+export function GalaxyView({ seed, groups, startYear, onVisibleMonthsChange }: Props) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const view = { centerX: width / 2, centerY: height / 2, zoom: 1 };
@@ -159,8 +162,14 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
 
   const [cull, setCull] = useState<CullState>({ tx: 0, ty: 0, s: 1 });
   const hasCentered = useRef(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const positionsRef = useRef<Map<string, GalaxyPos>>(new Map());
+  const groupsRef = useRef<Map<string, Entry[]>>(groups);
 
   const positions = useMemo(() => assignPositions(groups, startYear), [groups, startYear]);
+
+  useEffect(() => { positionsRef.current = positions; }, [positions]);
+  useEffect(() => { groupsRef.current = groups; }, [groups]);
 
   const monthGroups = useMemo<MonthGroupData[]>(() => {
     const byKey = new Map<string, string[]>();
@@ -204,7 +213,15 @@ export function GalaxyView({ seed, groups, startYear }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [positions.size]);
 
-  const updateCull = (tx: number, ty: number, s: number) => setCull({ tx, ty, s });
+  const updateCull = (tx: number, ty: number, s: number) => {
+    setCull({ tx, ty, s });
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      if (!onVisibleMonthsChange) return;
+      const months = getMonthsInBuffer(positionsRef.current, groupsRef.current, tx, ty, s, width, height);
+      onVisibleMonthsChange(months);
+    }, 150);
+  };
 
   const pan = Gesture.Pan()
     .minPointers(1)
