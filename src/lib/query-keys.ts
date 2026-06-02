@@ -5,5 +5,6 @@ export type AccountDto = {
   email: string;
   displayName: string;
   notification?: boolean;
+  sound?: boolean;
   provider: string;
 };
