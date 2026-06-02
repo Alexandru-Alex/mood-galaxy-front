@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { type DimensionValue, View } from 'react-native';
 import Animated, {
+  cancelAnimation,
   Easing,
   SharedValue,
   useAnimatedStyle,
@@ -72,17 +73,21 @@ function StarInGroup({ star, progress }: { star: StarData; progress: SharedValue
 // 5 stars share one shared value → 12 animations instead of 60
 const GROUP_SIZE = 5;
 
-function StarGroup({ stars }: { stars: StarData[] }) {
+function StarGroup({ stars, active }: { stars: StarData[]; active: boolean }) {
   const progress = useSharedValue(0);
 
   useEffect(() => {
+    if (!active) {
+      cancelAnimation(progress);
+      return;
+    }
     const avgDelay = stars.reduce((s, st) => s + st.delay, 0) / stars.length;
     const avgDuration = stars.reduce((s, st) => s + st.duration, 0) / stars.length;
     progress.value = withDelay(
       avgDelay,
       withRepeat(withTiming(1, { duration: avgDuration, easing: Easing.inOut(Easing.ease) }), -1, true),
     );
-  }, [progress]);
+  }, [active, progress]);
 
   return (
     <>
@@ -95,9 +100,10 @@ function StarGroup({ stars }: { stars: StarData[] }) {
 
 type StarfieldProps = {
   count?: number;
+  active?: boolean;
 };
 
-export function Starfield({ count = 60 }: StarfieldProps) {
+export function Starfield({ count = 60, active = true }: StarfieldProps) {
   const stars = useMemo(() => generateStars(count), [count]);
 
   const groups = useMemo(() => {
@@ -111,7 +117,7 @@ export function Starfield({ count = 60 }: StarfieldProps) {
   return (
     <View style={styles.container} pointerEvents="none">
       {groups.map((group, i) => (
-        <StarGroup key={i} stars={group} />
+        <StarGroup key={i} stars={group} active={active} />
       ))}
     </View>
   );
