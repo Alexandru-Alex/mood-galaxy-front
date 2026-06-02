@@ -87,7 +87,7 @@ function StarGroup({ stars, active }: { stars: StarData[]; active: boolean }) {
       avgDelay,
       withRepeat(withTiming(1, { duration: avgDuration, easing: Easing.inOut(Easing.ease) }), -1, true),
     );
-  }, [active, progress]);
+  }, [active, progress, stars]);
 
   return (
     <>

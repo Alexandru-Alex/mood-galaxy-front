@@ -20,6 +20,7 @@ import {
 import { BottomTabInset, Palette, Spacing } from '@/constants/theme';
 import { SpaceBackground } from '@/components/space-background';
 import { Starfield } from '@/components/starfield';
+import { useAudio } from '@/context/audio-context';
 
 export default function YouScreen() {
   const [showNameModal, setShowNameModal] = useState(false);
@@ -51,9 +52,19 @@ export default function YouScreen() {
     staleTime: Infinity,
   });
 
+  const { setMuted } = useAudio();
+  const [soundEnabled, setSoundEnabled] = useState<boolean | undefined>(undefined);
+
   useEffect(() => {
     if (account?.notification !== undefined) setNotifEnabled(account.notification);
   }, [account?.notification]);
+
+  useEffect(() => {
+    if (account?.sound !== undefined) {
+      setSoundEnabled(account.sound);
+      setMuted(!account.sound);
+    }
+  }, [account?.sound]);
 
   useEffect(() => {
     if (Platform.OS !== 'web') getSavedHour().then(setNotifHour);
@@ -84,6 +95,11 @@ export default function YouScreen() {
 
   const { mutate: updateNotification, isPending: savingNotification } = useMutation({
     mutationFn: (notification: boolean) => api.patch('/accounts', { notification }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ACCOUNT_QUERY_KEY }),
+  });
+
+  const { mutate: updateSound, isPending: savingSound } = useMutation({
+    mutationFn: (sound: boolean) => api.patch('/accounts', { sound }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ACCOUNT_QUERY_KEY }),
   });
 
@@ -131,6 +147,12 @@ export default function YouScreen() {
       await cancelAll();
     }
     updateNotification(val);
+  };
+
+  const handleSoundToggle = (val: boolean) => {
+    setSoundEnabled(val);
+    setMuted(!val);
+    updateSound(val);
   };
 
   const handleHourChange = (h: number) => {
@@ -286,6 +308,27 @@ export default function YouScreen() {
               <Ionicons name="chevron-forward" size={16} color="rgba(171,129,205,0.5)" />
             </Pressable>
           )}
+        </View>
+
+        {/* Appearance */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Appearance</Text>
+          <View style={styles.divider} />
+
+          <View style={styles.row}>
+            <Ionicons name="volume-medium-outline" size={20} color={Palette.majorelleBlue} />
+            <View style={styles.notifLabelGroup}>
+              <Text style={styles.rowLabel}>Sound</Text>
+              <Text style={styles.notifSubtext}>Background music</Text>
+            </View>
+            <Switch
+              value={soundEnabled ?? false}
+              onValueChange={handleSoundToggle}
+              disabled={savingSound}
+              trackColor={{ false: 'rgba(171,129,205,0.2)', true: 'rgba(87,74,226,0.6)' }}
+              thumbColor={Palette.majorelleBlue}
+            />
+          </View>
         </View>
 
         {/* Others */}
