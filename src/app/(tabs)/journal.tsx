@@ -49,8 +49,11 @@ export default function JournalScreen() {
     useInfiniteQuery({
       queryKey: ['notes'],
       queryFn: ({ pageParam = 0 }) => fetchNotesPage(pageParam as number),
-      getNextPageParam: (lastPage, allPages) =>
-        lastPage.last ? undefined : allPages.length,
+      getNextPageParam: (lastPage, allPages) => {
+        if (lastPage.last) return undefined;
+        if (allPages.length >= lastPage.totalPages) return undefined;
+        return allPages.length;
+      },
     });
 
   const sections = useMemo<DaySection[]>(() => {
