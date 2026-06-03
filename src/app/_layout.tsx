@@ -25,8 +25,8 @@ function AuthGuard() {
 
   useEffect(() => {
     getStoredToken().then((token) => {
-      const onLanding = segments[0] === 'landing';
-      if (!token && !onLanding) {
+      const publicRoutes = ['landing', 'verify-email', 'email-verified'];
+      if (!token && !publicRoutes.includes(segments[0])) {
         router.replace('/landing');
       }
     });
@@ -62,6 +62,8 @@ export default function RootLayout() {
             <Stack.Screen name="auth" />
             <Stack.Screen name="change-email" />
             <Stack.Screen name="change-password" />
+            <Stack.Screen name="verify-email" />
+            <Stack.Screen name="email-verified" />
           </Stack>
         </ThemeProvider>
       </AudioProvider>

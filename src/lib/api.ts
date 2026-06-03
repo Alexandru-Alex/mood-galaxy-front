@@ -9,7 +9,7 @@ const DEV_HOST =
 
 export const BASE_URL = __DEV__
   ? `http://${DEV_HOST}:8080`
-  : (process.env.EXPO_PUBLIC_API_URL ?? 'https://mood-galaxy-backend.onrender.com');
+  : (process.env.EXPO_PUBLIC_API_URL ?? 'https://budgetgarden-backend-latest.onrender.com');
 
 let _tokenCache: string | null | undefined = undefined;
 
