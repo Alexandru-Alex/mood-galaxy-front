@@ -17,6 +17,7 @@ import { useVoid } from '@/context/void-context';
 import { Palette } from '@/constants/theme';
 
 const PRESETS = [
+  { label: '1m',  seconds: 60 },
   { label: '5m',  seconds: 300 },
   { label: '10m', seconds: 600 },
   { label: '20m', seconds: 1200 },
