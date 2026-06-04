@@ -177,10 +177,8 @@ function SelectionScreen({ onStart, insetTop }: { onStart: (s: number) => void; 
 
 function ActiveSession({ remainingSeconds }: { remainingSeconds: number }) {
   return (
-    <View style={styles.screen}>
+    <View style={styles.activeScreen}>
       <StatusBar style="light" />
-      <SpaceBackground />
-      <Starfield count={50} />
       <View style={styles.activeContent}>
         <BlackHole size="full" />
         <Text style={styles.timerText}>{formatTime(remainingSeconds)}</Text>
@@ -220,6 +218,10 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: '#050410',
+  },
+  activeScreen: {
+    flex: 1,
+    backgroundColor: '#000',
   },
   // Intro animation
   blackOverlay: {
