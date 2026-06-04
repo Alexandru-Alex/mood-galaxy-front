@@ -1,9 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { createAudioPlayer } from 'expo-audio';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import type { AppStateStatus } from 'react-native';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const AppState = require('react-native/Libraries/AppState/AppState').default ?? require('react-native/Libraries/AppState/AppState');
+import { AppState, type AppStateStatus } from 'react-native';
 
 export type VoidStatus = 'idle' | 'running' | 'complete';
 

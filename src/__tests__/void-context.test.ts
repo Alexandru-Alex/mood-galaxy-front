@@ -13,10 +13,9 @@ jest.mock('expo-audio', () => ({
   createAudioPlayer: jest.fn(() => ({ play: jest.fn(), remove: jest.fn() })),
 }));
 
-jest.mock('react-native/Libraries/AppState/AppState', () => ({
-  addEventListener: jest.fn(() => ({ remove: jest.fn() })),
-  currentState: 'active',
-}));
+import { AppState } from 'react-native';
+
+jest.spyOn(AppState, 'addEventListener').mockReturnValue({ remove: jest.fn() } as any);
 
 function wrapper({ children }: { children: React.ReactNode }) {
   return React.createElement(VoidProvider, null, children);
