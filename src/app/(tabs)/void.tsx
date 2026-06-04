@@ -155,22 +155,34 @@ function EnteringVoidAnimation({ onComplete }: { onComplete: () => void }) {
 
 function ExitingVoidAnimation({ onComplete }: { onComplete: () => void }) {
   const holeScale = useSharedValue(1);
-  const blackOverlay = useSharedValue(1); // starts fully black
+  // Overlay corners round off first (borderRadius 0 → large), then whole thing shrinks
+  const overlayRadius = useSharedValue(0);
+  const overlayScale = useSharedValue(1);
+  const overlayOpacity = useSharedValue(1);
 
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    // Phase 1: black fades out — space background is revealed (0 → 1.4s)
-    blackOverlay.value = withTiming(0, { duration: 1400, easing: Easing.out(Easing.ease) });
+    // Phase 1 (0-700ms): corners round off — stars peek through corners first
+    overlayRadius.value = withTiming(500, { duration: 700, easing: Easing.out(Easing.ease) });
 
-    // Phase 2: black hole contracts and disappears (starts at 600ms)
-    holeScale.value = withDelay(600, withTiming(0, {
+    // Phase 2 (400-1300ms): circle shrinks to center
+    overlayScale.value = withDelay(400, withTiming(0, {
       duration: 900,
       easing: Easing.in(Easing.ease),
     }));
 
-    const timer = setTimeout(() => onCompleteRef.current(), 2000);
+    // Phase 2b: slight opacity fade as it shrinks
+    overlayOpacity.value = withDelay(900, withTiming(0, { duration: 400 }));
+
+    // Phase 3 (500-1300ms): black hole also shrinks with the overlay
+    holeScale.value = withDelay(500, withTiming(0, {
+      duration: 800,
+      easing: Easing.in(Easing.ease),
+    }));
+
+    const timer = setTimeout(() => onCompleteRef.current(), 1600);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -181,7 +193,9 @@ function ExitingVoidAnimation({ onComplete }: { onComplete: () => void }) {
   }));
 
   const overlayStyle = useAnimatedStyle(() => ({
-    opacity: blackOverlay.value,
+    opacity: overlayOpacity.value,
+    transform: [{ scale: overlayScale.value }],
+    borderRadius: overlayRadius.value,
   }));
 
   return (
@@ -194,7 +208,6 @@ function ExitingVoidAnimation({ onComplete }: { onComplete: () => void }) {
           <BlackHole size="full" />
         </Animated.View>
       </View>
-      {/* Black overlay fading out */}
       <Animated.View
         style={[StyleSheet.absoluteFill, styles.blackOverlay, overlayStyle]}
         pointerEvents="none"
@@ -267,7 +280,7 @@ function CompleteScreen({ durationSeconds, onReset }: { durationSeconds: number;
         </View>
         <Text style={styles.completeTitle}>You emerged</Text>
         <Text style={styles.completeSubtitle}>from the void</Text>
-        <View style={styles.summaryCard}>
+        <View style={styles.summaryWrap}>
           <Text style={styles.summaryDuration}>{minutes < 1 ? '<1' : String(minutes)}</Text>
           <Text style={styles.summaryLabel}>minutes in silence</Text>
         </View>
@@ -457,28 +470,30 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 3,
   },
-  summaryCard: {
-    backgroundColor: 'rgba(34,42,104,0.5)',
-    borderWidth: 1,
-    borderColor: 'rgba(171,129,205,0.2)',
-    borderRadius: 14,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
+  summaryWrap: {
     alignItems: 'center',
-    width: '100%',
+    paddingVertical: 20,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(171,129,205,0.2)',
+    width: '70%',
     marginTop: 4,
   },
   summaryDuration: {
-    fontSize: 32,
+    fontSize: 52,
     fontWeight: '200',
     color: Palette.brightLavender,
-    letterSpacing: 2,
+    letterSpacing: 4,
+    textShadowColor: Palette.brightLavender,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 18,
   },
   summaryLabel: {
     fontSize: 10,
-    color: 'rgba(185,179,214,0.55)',
+    fontWeight: '700',
+    color: 'rgba(171,129,205,0.55)',
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    marginTop: 3,
+    letterSpacing: 2,
+    marginTop: 6,
   },
 });
