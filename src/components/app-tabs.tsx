@@ -87,15 +87,30 @@ type TabIconProps = TabTriggerSlotProps & {
 };
 
 function TabIconButton({ isFocused, icon, iconOutline, ...props }: TabIconProps) {
+  const { status } = useVoid();
+  const locked = status === 'running';
+
   return (
     <Pressable
       {...props}
-      style={({ pressed }) => [styles.tabBtn, pressed && { opacity: 0.6 }]}
+      disabled={locked}
+      onPress={locked ? undefined : (props as any).onPress}
+      style={({ pressed }) => [
+        styles.tabBtn,
+        locked && styles.tabBtnLocked,
+        !locked && pressed && { opacity: 0.6 },
+      ]}
     >
       <Ionicons
         name={isFocused ? icon : iconOutline}
         size={26}
-        color={isFocused ? Palette.brightLavender : 'rgba(255,255,255,0.38)'}
+        color={
+          locked
+            ? 'rgba(255,255,255,0.12)'
+            : isFocused
+              ? Palette.brightLavender
+              : 'rgba(255,255,255,0.38)'
+        }
       />
     </Pressable>
   );
@@ -207,6 +222,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingBottom: 4,
+  },
+  tabBtnLocked: {
+    opacity: 0.3,
   },
   voidTabOuter: {
     flex: 1,

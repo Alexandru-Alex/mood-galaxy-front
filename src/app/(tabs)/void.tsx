@@ -1,5 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -17,6 +24,15 @@ const PRESETS = [
   { label: '60m', seconds: 3600 },
 ];
 
+const INTRO_LINES = [
+  'In the beginning',
+  'there was darkness',
+  'and silence.',
+];
+
+// Total intro duration before timer starts
+const INTRO_DURATION_MS = 4200;
+
 function pad(n: number) {
   return String(n).padStart(2, '0');
 }
@@ -30,14 +46,96 @@ function formatTime(seconds: number) {
 export default function VoidScreen() {
   const { status, durationSeconds, remainingSeconds, startSession, resetSession } = useVoid();
   const insets = useSafeAreaInsets();
+  // Holds selected duration while the intro animation plays
+  const [enteringFor, setEnteringFor] = useState<number | null>(null);
 
+  const handleEnter = (seconds: number) => setEnteringFor(seconds);
+
+  const handleIntroComplete = () => {
+    if (enteringFor !== null) {
+      startSession(enteringFor);
+      setEnteringFor(null);
+    }
+  };
+
+  if (enteringFor !== null) {
+    return <EnteringVoidAnimation onComplete={handleIntroComplete} />;
+  }
   if (status === 'running') {
     return <ActiveSession remainingSeconds={remainingSeconds} />;
   }
   if (status === 'complete') {
     return <CompleteScreen durationSeconds={durationSeconds} onReset={resetSession} />;
   }
-  return <SelectionScreen onStart={startSession} insetTop={insets.top} />;
+  return <SelectionScreen onStart={handleEnter} insetTop={insets.top} />;
+}
+
+function EnteringVoidAnimation({ onComplete }: { onComplete: () => void }) {
+  const holeScale = useSharedValue(1);
+  const blackOverlay = useSharedValue(0);
+  const textOpacity = useSharedValue(0);
+
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  useEffect(() => {
+    // Phase 1 — black hole rapidly expands (0 → 1.4s)
+    holeScale.value = withTiming(18, {
+      duration: 1400,
+      easing: Easing.in(Easing.ease),
+    });
+
+    // Phase 2 — screen fades to black (starts at 700ms)
+    blackOverlay.value = withDelay(700, withTiming(1, { duration: 900 }));
+
+    // Phase 3 — text fades in (starts at 1.8s)
+    textOpacity.value = withDelay(1800, withTiming(1, { duration: 700 }));
+
+    // Phase 4 — start session after full intro
+    const timer = setTimeout(() => onCompleteRef.current(), INTRO_DURATION_MS);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const holeStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: holeScale.value }],
+  }));
+
+  const overlayStyle = useAnimatedStyle(() => ({
+    opacity: blackOverlay.value,
+  }));
+
+  const textStyle = useAnimatedStyle(() => ({
+    opacity: textOpacity.value,
+  }));
+
+  return (
+    <View style={styles.screen}>
+      <StatusBar style="light" />
+      <SpaceBackground />
+      <Starfield count={50} />
+
+      {/* Black hole scaling up */}
+      <View style={styles.activeContent} pointerEvents="none">
+        <Animated.View style={holeStyle}>
+          <BlackHole size="full" />
+        </Animated.View>
+      </View>
+
+      {/* Fade to black */}
+      <Animated.View
+        style={[StyleSheet.absoluteFill, styles.blackOverlay, overlayStyle]}
+        pointerEvents="none"
+      />
+
+      {/* Poetic text */}
+      <Animated.View style={[styles.introTextWrap, textStyle]} pointerEvents="none">
+        {INTRO_LINES.map((line, i) => (
+          <Text key={i} style={styles.introText}>{line}</Text>
+        ))}
+      </Animated.View>
+    </View>
+  );
 }
 
 function SelectionScreen({ onStart, insetTop }: { onStart: (s: number) => void; insetTop: number }) {
@@ -123,6 +221,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#050410',
   },
+  // Intro animation
+  blackOverlay: {
+    backgroundColor: '#000',
+  },
+  introTextWrap: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  introText: {
+    fontSize: 20,
+    fontWeight: '200',
+    color: Palette.mauve,
+    letterSpacing: 2,
+    textAlign: 'center',
+  },
+  // Selection
   selectionContent: {
     flex: 1,
     alignItems: 'center',
@@ -205,6 +321,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
+  // Active session
   activeContent: {
     flex: 1,
     alignItems: 'center',
@@ -228,6 +345,7 @@ const styles = StyleSheet.create({
     letterSpacing: 4,
     marginTop: 8,
   },
+  // Complete
   completeContent: {
     flex: 1,
     alignItems: 'center',
