@@ -213,7 +213,7 @@ export default function HomeScreen() {
       )}
 
       <View
-        style={[styles.hud, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}
+        style={[styles.hud, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 60 }]}
         pointerEvents="box-none">
         <View style={styles.topRow} pointerEvents="none">
           <View>
