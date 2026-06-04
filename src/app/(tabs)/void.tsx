@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { StatusBar } from 'expo-status-bar';
+import * as NavigationBar from 'expo-navigation-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BlackHole } from '@/components/black-hole';
@@ -60,6 +61,23 @@ export default function VoidScreen() {
     }
     prevStatus.current = status;
   }, [status]);
+
+  // Hide status bar + Android nav bar when immersed, restore on exit
+  const isImmersed = enteringFor !== null || status === 'running' || showExitAnim;
+  useEffect(() => {
+    if (isImmersed) {
+      if (Platform.OS === 'android') {
+        NavigationBar.setVisibilityAsync('hidden');
+      }
+    } else {
+      if (Platform.OS === 'android') {
+        NavigationBar.setVisibilityAsync('visible');
+      }
+    }
+    return () => {
+      if (Platform.OS === 'android') NavigationBar.setVisibilityAsync('visible');
+    };
+  }, [isImmersed]);
 
   const handleEnter = (seconds: number) => setEnteringFor(seconds);
 
@@ -126,7 +144,7 @@ function EnteringVoidAnimation({ onComplete }: { onComplete: () => void }) {
 
   return (
     <View style={styles.screen}>
-      <StatusBar style="light" />
+      <StatusBar hidden />
       <SpaceBackground />
       <Starfield count={50} />
 
@@ -200,7 +218,7 @@ function ExitingVoidAnimation({ onComplete }: { onComplete: () => void }) {
 
   return (
     <View style={styles.screen}>
-      <StatusBar style="light" />
+      <StatusBar hidden />
       <SpaceBackground />
       <Starfield count={50} />
       <View style={styles.activeContent} pointerEvents="none">
@@ -256,7 +274,7 @@ function SelectionScreen({ onStart, insetTop }: { onStart: (s: number) => void; 
 function ActiveSession({ remainingSeconds }: { remainingSeconds: number }) {
   return (
     <View style={styles.activeScreen}>
-      <StatusBar style="light" />
+      <StatusBar hidden />
       <View style={styles.activeContent}>
         <BlackHole size="full" />
         <Text style={styles.timerText}>{formatTime(remainingSeconds)}</Text>
