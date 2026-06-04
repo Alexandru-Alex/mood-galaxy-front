@@ -24,45 +24,59 @@ import { BlackHole } from '@/components/black-hole';
 import { Palette } from '@/constants/theme';
 import { useVoid } from '@/context/void-context';
 
-// Circle button radius (half of 72px button)
-const BTN_R = 36;
-// U-curve radius — matches BTN_R exactly so the border is tangent to the circle
-const NOTCH_R = BTN_R + 2; // 2px air gap between circle and border
-// Horizontal smoothing before/after the curve begins
-const NOTCH_S = 16;
+const BTN_R = 36;         // circle button radius (72px button)
+const ARCH_H = BTN_R;     // how far the arch peak rises ABOVE the bar top
+const ARCH_S = 16;        // bezier smoothing either side of the arch
 
+// The arch curves UPWARD: border goes from flat (y=0 at sides)
+// up to the arch peak (y = -ARCH_H above bar top) at center,
+// forming a smooth dome that cradles the circle from below.
 function CurvedBackground({ width, height }: { width: number; height: number }) {
   const cx = width / 2;
-  const r = NOTCH_R;
-  const s = NOTCH_S;
+  const r = BTN_R;   // arch horizontal radius matches circle radius
+  const h = ARCH_H;  // arch vertical height
+  const s = ARCH_S;
 
-  // The cubic bezier approximation of a semicircle, going DOWN from y=0 to y=r and back.
-  // C p1x p1y p2x p2y ex ey
-  // Left arm:  horizontal entry → curves into the U bottom
-  // Right arm: U bottom → curves back up to horizontal exit
+  // SVG is extended upward by ARCH_H so the peak at screen y=-h maps to SVG y=0.
+  // Bar top (screen y=0) maps to SVG y=h.
+  const svgHeight = h + height;
+
+  // Fill: covers arch area + everything below bar top.
+  // At x=cx        : fill starts at SVG y=0    (screen y=-h = arch peak)
+  // At x=cx±(r+s)  : fill starts at SVG y=h    (screen y=0  = bar top)
   const fill = [
-    `M 0 0`,
+    `M 0 ${h}`,
     `H ${cx - r - s}`,
-    `C ${cx - r} 0 ${cx - r} ${r} ${cx} ${r}`,
-    `C ${cx + r} ${r} ${cx + r} 0 ${cx + r + s} 0`,
+    `C ${cx - r} ${h} ${cx - r} 0 ${cx} 0`,       // arch rises to peak
+    `C ${cx + r} 0 ${cx + r} ${h} ${cx + r + s} ${h}`, // arch comes back down
     `H ${width}`,
-    `V ${height}`,
+    `V ${svgHeight}`,
     `H 0`,
     `Z`,
   ].join(' ');
 
+  // Border: just the arch line (no fill)
   const border = [
-    `M 0 0`,
+    `M 0 ${h}`,
     `H ${cx - r - s}`,
-    `C ${cx - r} 0 ${cx - r} ${r} ${cx} ${r}`,
-    `C ${cx + r} ${r} ${cx + r} 0 ${cx + r + s} 0`,
+    `C ${cx - r} ${h} ${cx - r} 0 ${cx} 0`,
+    `C ${cx + r} 0 ${cx + r} ${h} ${cx + r + s} ${h}`,
     `H ${width}`,
   ].join(' ');
 
   return (
-    <Svg width={width} height={height} style={StyleSheet.absoluteFill}>
+    <Svg
+      width={width}
+      height={svgHeight}
+      style={[StyleSheet.absoluteFill, { top: -h }]}
+    >
       <Path d={fill} fill="rgba(5,4,16,0.97)" />
-      <Path d={border} fill="none" stroke="rgba(171,129,205,0.25)" strokeWidth={StyleSheet.hairlineWidth * 2} />
+      <Path
+        d={border}
+        fill="none"
+        stroke="rgba(171,129,205,0.25)"
+        strokeWidth={StyleSheet.hairlineWidth * 2}
+      />
     </Svg>
   );
 }
@@ -200,8 +214,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingBottom: 4,
   },
-  // BTN_R = 36 → width/height = 72, borderRadius = 36
-  // marginTop = -(BTN_R) = -36 → circle center sits exactly at tab bar top border
   voidTabBtn: {
     width: BTN_R * 2,
     height: BTN_R * 2,
@@ -211,7 +223,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(171,129,205,0.25)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -BTN_R,
+    // Lifts circle so its bottom sits just above the arch peak.
+    // ARCH_H (36) above bar top + BTN_R (36) = center at arch peak.
+    marginTop: -(BTN_R + ARCH_H),
     shadowColor: Palette.brightLavender,
     shadowOpacity: 0.3,
     shadowRadius: 14,
