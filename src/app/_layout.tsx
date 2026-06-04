@@ -3,8 +3,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { LogBox, useColorScheme } from 'react-native';
+import { LogBox, Platform, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Analytics } from '@vercel/analytics/react';
 
 // Known expo-router bug: useLinking resolves the initial URL async and tries to
 // update ContextNavigator state before React finishes mounting it. Dev-only, no
@@ -65,6 +66,7 @@ export default function RootLayout() {
             <Stack.Screen name="verify-email" />
             <Stack.Screen name="email-verified" />
           </Stack>
+          {Platform.OS === 'web' && <Analytics />}
         </ThemeProvider>
       </AudioProvider>
     </GestureHandlerRootView>
