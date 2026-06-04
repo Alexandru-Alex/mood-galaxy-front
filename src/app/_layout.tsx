@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 LogBox.ignoreLogs(["Can't perform a React state update on a component that hasn't mounted yet"]);
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AudioProvider } from '@/context/audio-context';
+import { VoidProvider } from '@/context/void-context';
 import { getStoredToken } from '@/lib/api';
 
 
@@ -49,23 +50,25 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AudioProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <AuthGuard />
-          <AnimatedSplashOverlay />
-          <Stack initialRouteName="landing" screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="landing" />
-            <Stack.Screen name="welcome" />
-            <Stack.Screen name="dashboard" />
-            <Stack.Screen name="pending-verification" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="galaxy" />
-            <Stack.Screen name="auth" />
-            <Stack.Screen name="change-email" />
-            <Stack.Screen name="change-password" />
-            <Stack.Screen name="verify-email" />
-            <Stack.Screen name="email-verified" />
-          </Stack>
-        </ThemeProvider>
+        <VoidProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <AuthGuard />
+            <AnimatedSplashOverlay />
+            <Stack initialRouteName="landing" screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="landing" />
+              <Stack.Screen name="welcome" />
+              <Stack.Screen name="dashboard" />
+              <Stack.Screen name="pending-verification" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="galaxy" />
+              <Stack.Screen name="auth" />
+              <Stack.Screen name="change-email" />
+              <Stack.Screen name="change-password" />
+              <Stack.Screen name="verify-email" />
+              <Stack.Screen name="email-verified" />
+            </Stack>
+          </ThemeProvider>
+        </VoidProvider>
       </AudioProvider>
     </GestureHandlerRootView>
     </QueryClientProvider>
