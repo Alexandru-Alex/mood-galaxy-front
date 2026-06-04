@@ -80,12 +80,14 @@ function VoidTabButton({ isFocused, ...props }: VoidTabButtonProps) {
   return (
     <Pressable
       {...props}
-      style={({ pressed }) => [styles.voidTabBtn, pressed && { opacity: 0.7 }]}
+      style={({ pressed }) => [styles.voidTabOuter, pressed && { opacity: 0.7 }]}
     >
-      {isRunning && (
-        <Animated.View style={[styles.pulseRing, pulseStyle]} />
-      )}
-      <BlackHole size="nav" active={true} />
+      <View style={styles.voidTabBtn}>
+        {isRunning && (
+          <Animated.View style={[styles.pulseRing, pulseStyle]} />
+        )}
+        <BlackHole size="nav" active={true} />
+      </View>
     </Pressable>
   );
 }
@@ -137,6 +139,7 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(171, 129, 205, 0.25)',
     paddingTop: 10,
     alignItems: 'center',
+    overflow: 'visible',
   },
   tabBtn: {
     flex: 1,
@@ -144,20 +147,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingBottom: 4,
   },
-  voidTabBtn: {
+  voidTabOuter: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     paddingBottom: 4,
-    position: 'relative',
-    marginTop: -18,
+  },
+  voidTabBtn: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: 'rgba(5,4,16,0.97)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(171,129,205,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -40,
+    shadowColor: '#ab81cd',
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: -3 },
+    elevation: 12,
   },
   pulseRing: {
     position: 'absolute',
-    width: 66,
-    height: 66,
-    borderRadius: 33,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     borderWidth: 1.5,
-    borderColor: 'rgba(171,129,205,0.5)',
+    borderColor: 'rgba(171,129,205,0.45)',
   },
 });
