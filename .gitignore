@@ -44,3 +44,9 @@ example
 
 # git worktrees
 .worktrees/
+
+# superpowers brainstorm sessions
+.superpowers/
+
+# crash dumps
+*.stackdump
