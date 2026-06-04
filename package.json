@@ -9,6 +9,7 @@
     "@gorhom/bottom-sheet": "^5",
     "@react-native-google-signin/google-signin": "^16.1.2",
     "@tanstack/react-query": "^4.44.0",
+    "@vercel/analytics": "^2.0.1",
     "expo": "~56.0.8",
     "expo-audio": "~56.0.11",
     "expo-auth-session": "~56.0.13",
