@@ -46,8 +46,19 @@ function formatTime(seconds: number) {
 export default function VoidScreen() {
   const { status, durationSeconds, remainingSeconds, startSession, resetSession } = useVoid();
   const insets = useSafeAreaInsets();
-  // Holds selected duration while the intro animation plays
+
+  // Intro: holds selected duration while entering animation plays
   const [enteringFor, setEnteringFor] = useState<number | null>(null);
+  // Exit: plays reverse animation when timer ends before showing CompleteScreen
+  const [showExitAnim, setShowExitAnim] = useState(false);
+  const prevStatus = useRef(status);
+
+  useEffect(() => {
+    if (prevStatus.current === 'running' && status === 'complete') {
+      setShowExitAnim(true);
+    }
+    prevStatus.current = status;
+  }, [status]);
 
   const handleEnter = (seconds: number) => setEnteringFor(seconds);
 
@@ -60,6 +71,9 @@ export default function VoidScreen() {
 
   if (enteringFor !== null) {
     return <EnteringVoidAnimation onComplete={handleIntroComplete} />;
+  }
+  if (showExitAnim) {
+    return <ExitingVoidAnimation onComplete={() => setShowExitAnim(false)} />;
   }
   if (status === 'running') {
     return <ActiveSession remainingSeconds={remainingSeconds} />;
@@ -134,6 +148,56 @@ function EnteringVoidAnimation({ onComplete }: { onComplete: () => void }) {
           <Text key={i} style={styles.introText}>{line}</Text>
         ))}
       </Animated.View>
+    </View>
+  );
+}
+
+function ExitingVoidAnimation({ onComplete }: { onComplete: () => void }) {
+  const holeScale = useSharedValue(1);
+  const blackOverlay = useSharedValue(1); // starts fully black
+
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  useEffect(() => {
+    // Phase 1: black fades out — space background is revealed (0 → 1.4s)
+    blackOverlay.value = withTiming(0, { duration: 1400, easing: Easing.out(Easing.ease) });
+
+    // Phase 2: black hole contracts and disappears (starts at 600ms)
+    holeScale.value = withDelay(600, withTiming(0, {
+      duration: 900,
+      easing: Easing.in(Easing.ease),
+    }));
+
+    const timer = setTimeout(() => onCompleteRef.current(), 2000);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const holeStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: holeScale.value }],
+    opacity: holeScale.value,
+  }));
+
+  const overlayStyle = useAnimatedStyle(() => ({
+    opacity: blackOverlay.value,
+  }));
+
+  return (
+    <View style={styles.screen}>
+      <StatusBar style="light" />
+      <SpaceBackground />
+      <Starfield count={50} />
+      <View style={styles.activeContent} pointerEvents="none">
+        <Animated.View style={holeStyle}>
+          <BlackHole size="full" />
+        </Animated.View>
+      </View>
+      {/* Black overlay fading out */}
+      <Animated.View
+        style={[StyleSheet.absoluteFill, styles.blackOverlay, overlayStyle]}
+        pointerEvents="none"
+      />
     </View>
   );
 }
