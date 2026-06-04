@@ -12,6 +12,7 @@ import { Analytics } from '@vercel/analytics/react';
 // runtime impact. https://github.com/expo/expo/issues/useLinking-race
 LogBox.ignoreLogs(["Can't perform a React state update on a component that hasn't mounted yet"]);
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { UpdatePrompt } from '@/components/update-prompt';
 import { AudioProvider } from '@/context/audio-context';
 import { VoidProvider } from '@/context/void-context';
 import { getStoredToken } from '@/lib/api';
@@ -55,6 +56,7 @@ export default function RootLayout() {
           <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
             <AuthGuard />
             <AnimatedSplashOverlay />
+            <UpdatePrompt />
             <Stack initialRouteName="landing" screenOptions={{ headerShown: false }}>
               <Stack.Screen name="landing" />
               <Stack.Screen name="welcome" />
