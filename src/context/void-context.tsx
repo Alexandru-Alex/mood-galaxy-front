@@ -1,9 +1,9 @@
 import * as Haptics from 'expo-haptics';
 import { createAudioPlayer } from 'expo-audio';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import type { AppStateStatus } from 'react-native';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const AppState = require('react-native/Libraries/AppState/AppState').default ?? require('react-native/Libraries/AppState/AppState');
-import type { AppStateStatus } from 'react-native';
 
 export type VoidStatus = 'idle' | 'running' | 'complete';
 
@@ -85,7 +85,7 @@ export function VoidProvider({ children }: { children: React.ReactNode }) {
     if (remaining === 0) {
       handleComplete();
     }
-  }, []); // no deps — reads only refs
+  }, [handleComplete]);
 
   useEffect(() => { statusRef.current = status; }, [status]);
 

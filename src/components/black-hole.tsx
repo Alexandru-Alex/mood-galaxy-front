@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -31,14 +31,6 @@ export function BlackHole({ size, active = true }: Props) {
   const rot2 = useSharedValue(0);
   const rot3 = useSharedValue(0);
 
-  const startAnimations = useCallback(() => {
-    rot1.value = withRepeat(withTiming(360,  { duration: 4000, easing: Easing.linear }), -1, false);
-    rot2.value = withRepeat(withTiming(-360, { duration: 2800, easing: Easing.linear }), -1, false);
-    if (cfg.ring3) {
-      rot3.value = withRepeat(withTiming(360, { duration: 2000, easing: Easing.linear }), -1, false);
-    }
-  }, [rot1, rot2, rot3, cfg.ring3]);
-
   useEffect(() => {
     if (!active) {
       cancelAnimation(rot1);
@@ -46,8 +38,12 @@ export function BlackHole({ size, active = true }: Props) {
       if (cfg.ring3) cancelAnimation(rot3);
       return;
     }
-    startAnimations();
-  }, [active, startAnimations, rot1, rot2, rot3, cfg.ring3]);
+    rot1.value = withRepeat(withTiming(360,  { duration: 4000, easing: Easing.linear }), -1, false);
+    rot2.value = withRepeat(withTiming(-360, { duration: 2800, easing: Easing.linear }), -1, false);
+    if (cfg.ring3) {
+      rot3.value = withRepeat(withTiming(360, { duration: 2000, easing: Easing.linear }), -1, false);
+    }
+  }, [active, rot1, rot2, rot3, cfg.ring3]);
 
   // size is treated as immutable — component should be remounted to change size
   const tiltDeg = size === 'nav' ? '65deg' : '70deg';
