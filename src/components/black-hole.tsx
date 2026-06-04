@@ -16,7 +16,7 @@ type BlackHoleSize = 'full' | 'nav' | 'preview';
 const SIZE_CONFIG = {
   full:    { container: 160, ring1: { w: 160, h: 46 }, ring2: { w: 120, h: 34 }, ring3: { w: 80,  h: 23 }, core: 44 },
   preview: { container: 110, ring1: { w: 110, h: 31 }, ring2: { w: 82,  h: 23 }, ring3: { w: 55,  h: 16 }, core: 30 },
-  nav:     { container: 42,  ring1: { w: 42,  h: 12 }, ring2: { w: 31,  h: 8.5 }, ring3: null,             core: 13 },
+  nav:     { container: 54,  ring1: { w: 54,  h: 15 }, ring2: { w: 40,  h: 11 }, ring3: null,              core: 17 },
 } as const;
 
 type Props = {
