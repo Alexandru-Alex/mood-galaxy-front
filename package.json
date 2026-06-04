@@ -18,6 +18,7 @@
     "expo-device": "~56.0.4",
     "expo-font": "~56.0.5",
     "expo-glass-effect": "~56.0.4",
+    "expo-haptics": "~56.0.3",
     "expo-image": "~56.0.9",
     "expo-linking": "~56.0.13",
     "expo-notifications": "~56.0.15",
@@ -40,6 +41,7 @@
     "react-native-worklets": "0.8.3"
   },
   "devDependencies": {
+    "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.2.2",
     "babel-jest": "^30.4.1",
