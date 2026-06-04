@@ -24,17 +24,22 @@ import { BlackHole } from '@/components/black-hole';
 import { Palette } from '@/constants/theme';
 import { useVoid } from '@/context/void-context';
 
-// Radius of the circular notch (matches voidTabBtn radius + small gap)
-const NOTCH_R = 42;
-// Bezier smoothing on the sides of the notch
-const NOTCH_S = 18;
+// Circle button radius (half of 72px button)
+const BTN_R = 36;
+// U-curve radius — matches BTN_R exactly so the border is tangent to the circle
+const NOTCH_R = BTN_R + 2; // 2px air gap between circle and border
+// Horizontal smoothing before/after the curve begins
+const NOTCH_S = 16;
 
 function CurvedBackground({ width, height }: { width: number; height: number }) {
   const cx = width / 2;
   const r = NOTCH_R;
   const s = NOTCH_S;
 
-  // Background fill with smooth curved notch cut from the top center
+  // The cubic bezier approximation of a semicircle, going DOWN from y=0 to y=r and back.
+  // C p1x p1y p2x p2y ex ey
+  // Left arm:  horizontal entry → curves into the U bottom
+  // Right arm: U bottom → curves back up to horizontal exit
   const fill = [
     `M 0 0`,
     `H ${cx - r - s}`,
@@ -46,7 +51,6 @@ function CurvedBackground({ width, height }: { width: number; height: number }) 
     `Z`,
   ].join(' ');
 
-  // Thin border line following the same curved path
   const border = [
     `M 0 0`,
     `H ${cx - r - s}`,
@@ -58,7 +62,7 @@ function CurvedBackground({ width, height }: { width: number; height: number }) 
   return (
     <Svg width={width} height={height} style={StyleSheet.absoluteFill}>
       <Path d={fill} fill="rgba(5,4,16,0.97)" />
-      <Path d={border} fill="none" stroke="rgba(171,129,205,0.25)" strokeWidth={0.5} />
+      <Path d={border} fill="none" stroke="rgba(171,129,205,0.25)" strokeWidth={StyleSheet.hairlineWidth * 2} />
     </Svg>
   );
 }
@@ -196,28 +200,30 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingBottom: 4,
   },
+  // BTN_R = 36 → width/height = 72, borderRadius = 36
+  // marginTop = -(BTN_R) = -36 → circle center sits exactly at tab bar top border
   voidTabBtn: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
+    width: BTN_R * 2,
+    height: BTN_R * 2,
+    borderRadius: BTN_R,
     backgroundColor: '#050410',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(171,129,205,0.35)',
+    borderColor: 'rgba(171,129,205,0.25)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -40,
+    marginTop: -BTN_R,
     shadowColor: Palette.brightLavender,
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
     shadowOffset: { width: 0, height: -2 },
     elevation: 12,
   },
   pulseRing: {
     position: 'absolute',
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: BTN_R * 2 + 18,
+    height: BTN_R * 2 + 18,
+    borderRadius: BTN_R + 9,
     borderWidth: 1.5,
-    borderColor: 'rgba(171,129,205,0.45)',
+    borderColor: 'rgba(171,129,205,0.4)',
   },
 });
