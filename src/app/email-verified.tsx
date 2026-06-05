@@ -10,7 +10,7 @@ import { Float } from '@/components/float';
 import { SpaceBackground } from '@/components/space-background';
 import { Starfield } from '@/components/starfield';
 import { Palette } from '@/constants/theme';
-import { clearPendingEmail, getStoredToken } from '@/lib/api';
+import { clearPendingEmail, getStoredToken, setIsNewUserCache } from '@/lib/api';
 
 export default function EmailVerifiedScreen() {
   const router = useRouter();
@@ -25,7 +25,12 @@ export default function EmailVerifiedScreen() {
     const isNew = Platform.OS === 'web'
       ? localStorage.getItem('is_new_user')
       : await SecureStore.getItemAsync('is_new_user');
-    router.replace(isNew === 'true' ? '/welcome' : '/');
+    if (isNew === 'true') {
+      setIsNewUserCache(true);
+      router.replace('/welcome');
+    } else {
+      router.replace('/');
+    }
   };
 
   const handleTryAgain = async () => {

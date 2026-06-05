@@ -17,8 +17,8 @@ import { SpaceBackground } from '@/components/space-background';
 import { StarCircle } from '@/components/star-circle';
 import { Starfield } from '@/components/starfield';
 import { ThemedText } from '@/components/themed-text';
-import { useAudio } from '@/context/audio-context';
 import { SoundIcon } from '@/components/sound-icon';
+import { useAudio } from '@/context/audio-context';
 import { api, getStoredToken, getPendingEmail, saveToken, saveGalaxySeed, setIsNewUserCache } from '@/lib/api';
 import { styles } from '@/styles/landing.styles';
 
@@ -65,7 +65,12 @@ export default function LandingScreen() {
         Platform.OS === 'web'
           ? localStorage.getItem('is_new_user')
           : await SecureStore.getItemAsync('is_new_user');
-      router.replace(isNew === 'true' ? '/welcome' : '/');
+      if (isNew === 'true') {
+        setIsNewUserCache(true);
+        router.replace('/welcome');
+      } else {
+        router.replace('/');
+      }
     });
   }, []);
 
@@ -141,8 +146,11 @@ export default function LandingScreen() {
     setAuthVisible(false);
     if (!emailVerified) {
       router.replace('/pending-verification');
+    } else if (newUser) {
+      setIsNewUserCache(true);
+      router.replace('/welcome');
     } else {
-      router.replace(newUser ? '/welcome' : '/');
+      router.replace('/');
     }
   };
 
