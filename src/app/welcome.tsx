@@ -1,8 +1,8 @@
 import { Sora_700Bold, useFonts } from '@expo-google-fonts/sora';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
 
 import { Astronaut } from '@/components/astronaut';
@@ -21,20 +21,17 @@ export default function WelcomeScreen() {
   const [name, setName] = useState('');
   const [focused, setFocused] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isNewUser, setIsNewUser] = useState<boolean | undefined>(undefined);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const router = useRouter();
+  const { isNew } = useLocalSearchParams<{ isNew?: string }>();
 
-  useEffect(() => {
-    if (Platform.OS === 'web') {
-      setIsNewUser(localStorage.getItem('is_new_user') === 'true');
-    } else {
-      SecureStore.getItemAsync('is_new_user').then((v) => setIsNewUser(v === 'true'));
-    }
-  }, []);
+  // Reset onboarding state every time this screen gains focus so a stale
+  // component instance (Expo Router may reuse it) never skips the name form.
+  useFocusEffect(useCallback(() => {
+    setShowOnboarding(false);
+  }, []));
 
-  if (isNewUser === undefined) return null;
-  if (!isNewUser) return <Redirect href="/" />;
+  if (isNew !== 'true') return <Redirect href="/" />;
 
   const canContinue = name.trim().length > 0;
 

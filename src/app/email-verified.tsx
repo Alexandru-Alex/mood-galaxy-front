@@ -25,7 +25,7 @@ export default function EmailVerifiedScreen() {
     const isNew = Platform.OS === 'web'
       ? localStorage.getItem('is_new_user')
       : await SecureStore.getItemAsync('is_new_user');
-    router.replace(isNew === 'true' ? '/welcome' : '/');
+    router.replace(isNew === 'true' ? { pathname: '/welcome', params: { isNew: 'true' } } : '/');
   };
 
   const handleTryAgain = async () => {
