@@ -13,8 +13,7 @@ import { SpaceBackground } from '@/components/space-background';
 import { Starfield } from '@/components/starfield';
 import { AstronautConstellation } from '@/components/astronaut-constellation';
 import { Palette, Spacing } from '@/constants/theme';
-import * as SecureStore from 'expo-secure-store';
-import { api, getStoredSeed, getOnboardingComplete } from '@/lib/api';
+import { api, getStoredSeed } from '@/lib/api';
 import type { BackendEntry } from '@/lib/types';
 import {
   constellationIdForEntry,
@@ -26,7 +25,6 @@ import {
   type View as GalaxyView,
 } from '@/lib/galaxyPositioning';
 import { router } from 'expo-router';
-import { OnboardingSplash } from '@/components/onboarding-splash';
 import { ConstellationCelebration } from '@/components/constellation-celebration';
 
 function getFormattedDate(): string {
@@ -151,7 +149,6 @@ export default function HomeScreen() {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const bottomSheetRef = useRef<JournalSheetHandle>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [showSplash, setShowSplash] = useState<boolean>(false);
   const celebratedConstellationId = useRef<string | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
   const mascotFloat = useSharedValue(0);
@@ -188,18 +185,6 @@ export default function HomeScreen() {
     api.get<AccountDto>('/accounts')
       .then((data) => setDisplayName(data.displayName ?? null))
       .catch(console.error);
-  }, []);
-
-  useEffect(() => {
-    (async () => {
-      const done = await getOnboardingComplete().catch(() => true);
-      if (done) return;
-      const isNew = Platform.OS === 'web'
-        ? localStorage.getItem('is_new_user') === 'true'
-        : (await SecureStore.getItemAsync('is_new_user')) === 'true';
-      if (isNew) setShowSplash(true);
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
@@ -283,16 +268,6 @@ export default function HomeScreen() {
 
       <JournalSheet ref={bottomSheetRef} />
       <DayNotesSheet date={selectedDate} onClose={() => setSelectedDate(null)} />
-      {showSplash && (
-        <OnboardingSplash
-          onBegin={() => {
-            setShowSplash(false);
-            bottomSheetRef.current?.present();
-          }}
-          onSkip={() => setShowSplash(false)}
-        />
-      )}
-
       {showCelebration && (
         <ConstellationCelebration
           seed={seed}

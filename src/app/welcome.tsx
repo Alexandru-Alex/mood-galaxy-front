@@ -1,8 +1,8 @@
 import { Sora_700Bold, useFonts } from '@expo-google-fonts/sora';
-import { Redirect, useFocusEffect, useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
 
 import { Astronaut } from '@/components/astronaut';
@@ -25,17 +25,13 @@ export default function WelcomeScreen() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const router = useRouter();
 
-  // Re-read is_new_user and reset onboarding state every time the screen
-  // gains focus — guards against stale component state if Expo Router reuses
-  // the instance between navigations.
-  useFocusEffect(useCallback(() => {
-    setShowOnboarding(false);
+  useEffect(() => {
     if (Platform.OS === 'web') {
       setIsNewUser(localStorage.getItem('is_new_user') === 'true');
     } else {
       SecureStore.getItemAsync('is_new_user').then((v) => setIsNewUser(v === 'true'));
     }
-  }, []));
+  }, []);
 
   if (isNewUser === undefined) return null;
   if (!isNewUser) return <Redirect href="/" />;
