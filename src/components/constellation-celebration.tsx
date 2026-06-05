@@ -74,6 +74,7 @@ export function ConstellationCelebration({
 
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dismissFadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dismissed = useRef(false);
 
   const onDismissRef = useRef(onDismiss);
   useEffect(() => { onDismissRef.current = onDismiss; }, [onDismiss]);
@@ -101,7 +102,9 @@ export function ConstellationCelebration({
     dismissTimer.current = setTimeout(() => {
       bannerOpacity.value = withTiming(0, { duration: 300 });
       bannerY.value = withTiming(20, { duration: 300 });
-      dismissFadeTimer.current = setTimeout(() => { onDismissRef.current(); }, 320);
+      dismissFadeTimer.current = setTimeout(() => {
+        if (!dismissed.current) { dismissed.current = true; onDismissRef.current(); }
+      }, 320);
     }, 5000);
 
     return () => {
@@ -128,7 +131,9 @@ export function ConstellationCelebration({
     bannerOpacity.value = withTiming(0, { duration: 200 });
     bannerY.value = withTiming(20, { duration: 200 });
     onViewGalaxy();
-    dismissFadeTimer.current = setTimeout(() => { onDismissRef.current(); }, 220);
+    dismissFadeTimer.current = setTimeout(() => {
+      if (!dismissed.current) { dismissed.current = true; onDismissRef.current(); }
+    }, 220);
   }
 
   return (

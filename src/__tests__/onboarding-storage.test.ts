@@ -22,7 +22,7 @@ beforeEach(() => {
 });
 
 describe('getOnboardingComplete (native)', () => {
-  beforeEach(() => { (Platform as any).OS = 'ios'; });
+  beforeEach(() => { jest.replaceProperty(Platform, 'OS', 'ios'); });
 
   it('returns false when key is absent', async () => {
     mockGet.mockResolvedValueOnce(null);
@@ -37,7 +37,7 @@ describe('getOnboardingComplete (native)', () => {
 });
 
 describe('setOnboardingComplete (native)', () => {
-  beforeEach(() => { (Platform as any).OS = 'ios'; });
+  beforeEach(() => { jest.replaceProperty(Platform, 'OS', 'ios'); });
 
   it('stores "1" under onboarding_complete', async () => {
     mockSet.mockResolvedValueOnce(undefined);
@@ -47,7 +47,7 @@ describe('setOnboardingComplete (native)', () => {
 });
 
 describe('getOnboardingComplete (web)', () => {
-  beforeEach(() => { (Platform as any).OS = 'web'; });
+  beforeEach(() => { jest.replaceProperty(Platform, 'OS', 'web'); });
 
   it('returns false when key is absent', async () => {
     expect(await getOnboardingComplete()).toBe(false);
@@ -60,7 +60,7 @@ describe('getOnboardingComplete (web)', () => {
 });
 
 describe('setOnboardingComplete (web)', () => {
-  beforeEach(() => { (Platform as any).OS = 'web'; });
+  beforeEach(() => { jest.replaceProperty(Platform, 'OS', 'web'); });
 
   it('stores "1" in localStorage', async () => {
     await setOnboardingComplete();
