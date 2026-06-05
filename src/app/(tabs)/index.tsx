@@ -208,8 +208,8 @@ export default function HomeScreen() {
   const filledSlots = new Set(currentEntries.map((e) => slotForEntry(e.entryIndex)));
   const nextSlot = Array.from({ length: MAX_SLOTS }, (_, i) => i).find((i) => !filledSlots.has(i));
   const mascotPos: Point | null = nextSlot !== undefined ? allPositions[nextSlot] : null;
-  const constellationScreenX = view.centerX + Math.cos(center.angle) * center.radius;
-  const constellationScreenY = view.centerY + Math.sin(center.angle) * center.radius;
+  const constellationScreenX = view.centerX + Math.cos(center.angle) * center.radius * view.zoom;
+  const constellationScreenY = view.centerY + Math.sin(center.angle) * center.radius * view.zoom;
 
   useEffect(() => {
     if (
