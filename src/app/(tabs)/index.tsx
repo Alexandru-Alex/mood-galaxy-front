@@ -13,7 +13,7 @@ import { SpaceBackground } from '@/components/space-background';
 import { Starfield } from '@/components/starfield';
 import { AstronautConstellation } from '@/components/astronaut-constellation';
 import { Palette, Spacing } from '@/constants/theme';
-import { api, getStoredSeed } from '@/lib/api';
+import { api, getStoredSeed, getOnboardingComplete } from '@/lib/api';
 import type { BackendEntry } from '@/lib/types';
 import {
   constellationIdForEntry,
@@ -24,6 +24,9 @@ import {
   type Point,
   type View as GalaxyView,
 } from '@/lib/galaxyPositioning';
+import { router } from 'expo-router';
+import { OnboardingSplash } from '@/components/onboarding-splash';
+import { ConstellationCelebration } from '@/components/constellation-celebration';
 
 function getFormattedDate(): string {
   return new Date().toLocaleDateString('en-US', {
@@ -147,6 +150,9 @@ export default function HomeScreen() {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const bottomSheetRef = useRef<JournalSheetHandle>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [showSplash, setShowSplash] = useState<boolean>(false);
+  const celebratedConstellationId = useRef<string | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
   const mascotFloat = useSharedValue(0);
   const mascotFloatStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: mascotFloat.value }],
@@ -183,6 +189,13 @@ export default function HomeScreen() {
       .catch(console.error);
   }, []);
 
+  useEffect(() => {
+    getOnboardingComplete()
+      .then((done) => { if (!done) setShowSplash(true); })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const sorted = [...entries].sort((a, b) => a.entryIndex - b.entryIndex);
   const lastEntry = sorted[sorted.length - 1];
   const currentCId = lastEntry ? constellationIdForEntry(lastEntry.entryIndex) : 'c0';
@@ -195,6 +208,18 @@ export default function HomeScreen() {
   const filledSlots = new Set(currentEntries.map((e) => slotForEntry(e.entryIndex)));
   const nextSlot = Array.from({ length: MAX_SLOTS }, (_, i) => i).find((i) => !filledSlots.has(i));
   const mascotPos: Point | null = nextSlot !== undefined ? allPositions[nextSlot] : null;
+  const constellationScreenX = view.centerX + Math.cos(center.angle) * center.radius;
+  const constellationScreenY = view.centerY + Math.sin(center.angle) * center.radius;
+
+  useEffect(() => {
+    if (
+      currentEntries.length === MAX_SLOTS &&
+      currentCId !== celebratedConstellationId.current
+    ) {
+      celebratedConstellationId.current = currentCId;
+      setShowCelebration(true);
+    }
+  }, [currentEntries.length, currentCId]);
 
   return (
     <View style={styles.container}>
@@ -252,6 +277,27 @@ export default function HomeScreen() {
 
       <JournalSheet ref={bottomSheetRef} />
       <DayNotesSheet date={selectedDate} onClose={() => setSelectedDate(null)} />
+      {showSplash && (
+        <OnboardingSplash
+          onBegin={() => {
+            setShowSplash(false);
+            bottomSheetRef.current?.present();
+          }}
+          onSkip={() => setShowSplash(false)}
+        />
+      )}
+
+      {showCelebration && (
+        <ConstellationCelebration
+          seed={seed}
+          constellationId={currentCId}
+          entries={currentEntries}
+          constellationX={constellationScreenX}
+          constellationY={constellationScreenY}
+          onViewGalaxy={() => router.push('/(tabs)/galaxy')}
+          onDismiss={() => setShowCelebration(false)}
+        />
+      )}
     </View>
   );
 }
