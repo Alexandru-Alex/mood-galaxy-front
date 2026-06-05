@@ -1,7 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AstronautLanding } from '@/components/astronaut-landing';
@@ -20,7 +21,11 @@ export default function EmailVerifiedScreen() {
   const handleContinue = async () => {
     await clearPendingEmail();
     const token = await getStoredToken();
-    router.replace(token ? '/dashboard' : '/landing');
+    if (!token) { router.replace('/landing'); return; }
+    const isNew = Platform.OS === 'web'
+      ? localStorage.getItem('is_new_user')
+      : await SecureStore.getItemAsync('is_new_user');
+    router.replace(isNew === 'true' ? '/welcome' : '/');
   };
 
   const handleTryAgain = async () => {
