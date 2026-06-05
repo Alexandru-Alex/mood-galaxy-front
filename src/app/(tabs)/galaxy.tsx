@@ -38,8 +38,14 @@ export default function GalaxyScreen() {
   useFocusEffect(
     useCallback(() => {
       setFocused(true);
+      // Drop the current month from the cache so any entries added since last
+      // visit (e.g. the one that just triggered the constellation celebration)
+      // are picked up on the next visible-months pass.
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      loadedMonths.current.delete(currentMonth);
+      handleVisibleMonthsChange([currentMonth]);
       return () => setFocused(false);
-    }, []),
+    }, [handleVisibleMonthsChange]),
   );
 
   const pendingUpdates = useRef(new Map<string, Entry[]>());
