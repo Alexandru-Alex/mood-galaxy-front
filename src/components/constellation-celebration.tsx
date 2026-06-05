@@ -6,6 +6,7 @@ import Animated, {
   useSharedValue,
   withDelay,
   withSequence,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Circle, Polyline } from 'react-native-svg';
@@ -23,11 +24,11 @@ function toSvgCoord(v: number): number {
   return MINI_SIZE / 2 + v * MINI_RANGE;
 }
 
-const SPARKLE_OFFSETS: { dx: number; dy: number; delay: number; color: keyof typeof MoodColors }[] = [
-  { dx: -28, dy: -20, delay: 0,   color: 'JOYFUL' },
-  { dx:  28, dy: -24, delay: 80,  color: 'CALM' },
-  { dx: -20, dy:  10, delay: 160, color: 'ANXIOUS' },
-  { dx:  24, dy:   8, delay: 240, color: 'SAD' },
+const SPARKLE_OFFSETS: { dx: number; dy: number; delay: number }[] = [
+  { dx: -28, dy: -20, delay: 0 },
+  { dx:  28, dy: -24, delay: 80 },
+  { dx: -20, dy:  10, delay: 160 },
+  { dx:  24, dy:   8, delay: 240 },
 ];
 
 type Props = {
@@ -55,7 +56,7 @@ export function ConstellationCelebration({
     .join(' ');
 
   // Banner slide-up + fade
-  const bannerY = useSharedValue(24);
+  const bannerY = useSharedValue(20);
   const bannerOpacity = useSharedValue(0);
 
   // Sparkle animations — one shared value per sparkle
@@ -77,8 +78,8 @@ export function ConstellationCelebration({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     // Banner enters after 400ms
-    bannerY.value = withDelay(400, withTiming(0, { duration: 350, easing: Easing.out(Easing.quad) }));
-    bannerOpacity.value = withDelay(400, withTiming(1, { duration: 350 }));
+    bannerY.value = withDelay(400, withSpring(0, { damping: 18, stiffness: 160 }));
+    bannerOpacity.value = withDelay(400, withTiming(1, { duration: 300 }));
 
     // Sparkles
     SPARKLE_OFFSETS.forEach(({ delay }, i) => {
@@ -95,7 +96,7 @@ export function ConstellationCelebration({
     // Auto-dismiss after 5s
     dismissTimer.current = setTimeout(() => {
       bannerOpacity.value = withTiming(0, { duration: 300 });
-      bannerY.value = withTiming(16, { duration: 300 });
+      bannerY.value = withTiming(20, { duration: 300 });
       setTimeout(onDismiss, 320);
     }, 5000);
 
@@ -125,7 +126,7 @@ export function ConstellationCelebration({
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {/* Sparkles positioned around constellation center */}
-      {SPARKLE_OFFSETS.map(({ dx, dy, color }, i) => (
+      {SPARKLE_OFFSETS.map(({ dx, dy }, i) => (
         <Animated.Text
           key={i}
           pointerEvents="none"
@@ -134,7 +135,7 @@ export function ConstellationCelebration({
             {
               left: constellationX + dx - 6,
               top: constellationY + dy - 6,
-              color: MoodColors[color],
+              color: MoodColors[entries[i]?.mood ?? 'CALM'],
             },
             sparkleStyles[i],
           ]}
@@ -200,10 +201,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: 'rgba(26,16,64,0.95)',
+    backgroundColor: 'rgba(91,58,185,0.2)',
     borderWidth: 1,
     borderColor: 'rgba(139,105,235,0.35)',
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 12,
   },
   miniConstellation: {
