@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { createAudioPlayer } from 'expo-audio';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { AppState, type AppStateStatus } from 'react-native';
+import { AppState, type AppStateStatus, Platform, Vibration } from 'react-native';
 
 export type VoidStatus = 'idle' | 'running' | 'complete';
 
@@ -57,6 +57,7 @@ export function VoidProvider({ children }: { children: React.ReactNode }) {
       chimeTimerRef.current = null;
     }
     if (chimePlayerRef.current !== null) {
+      chimePlayerRef.current.pause();
       chimePlayerRef.current.remove();
       chimePlayerRef.current = null;
     }
@@ -71,17 +72,24 @@ export function VoidProvider({ children }: { children: React.ReactNode }) {
     setRemainingSeconds(0);
     setStatus('complete');
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-      await new Promise(r => setTimeout(r, 120));
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-      await new Promise(r => setTimeout(r, 120));
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      if (Platform.OS === 'android') {
+        // pattern: [delay, vibrate, pause, vibrate, pause, vibrate]
+        Vibration.vibrate([0, 600, 120, 600, 120, 600]);
+      } else {
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        await new Promise(r => setTimeout(r, 120));
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        await new Promise(r => setTimeout(r, 120));
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      }
     } catch {}
     try {
       const player = createAudioPlayer(require('../../assets/audio/chime.mp3'));
+      player.loop = false;
       player.play();
       chimePlayerRef.current = player;
       chimeTimerRef.current = setTimeout(() => {
+        player.pause();
         player.remove();
         chimePlayerRef.current = null;
         chimeTimerRef.current = null;
