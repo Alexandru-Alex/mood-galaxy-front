@@ -93,6 +93,11 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
         );
         await saveToken(data.token);
         if (data.seed !== undefined) await saveGalaxySeed(data.seed);
+        if (Platform.OS === 'web') {
+          localStorage.setItem('is_new_user', String(data.newUser));
+        } else {
+          await SecureStore.setItemAsync('is_new_user', String(data.newUser));
+        }
         // Check email verification: 403 with "not verified" means pending
         const checkRes = await fetch(`${BASE_URL}/accounts`, {
           headers: { Authorization: data.token },
@@ -111,7 +116,7 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
             return;
           }
         }
-        onSuccess(false);
+        onSuccess(data.newUser);
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Something went wrong. Try again.');
