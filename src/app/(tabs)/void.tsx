@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -104,6 +104,7 @@ export default function VoidScreen() {
 }
 
 function EnteringVoidAnimation({ onComplete }: { onComplete: () => void }) {
+  const { height: screenHeight } = useWindowDimensions();
   const holeScale = useSharedValue(1);
   const blackOverlay = useSharedValue(0);
   const textOpacity = useSharedValue(0);
@@ -161,8 +162,8 @@ function EnteringVoidAnimation({ onComplete }: { onComplete: () => void }) {
         pointerEvents="none"
       />
 
-      {/* Poetic text */}
-      <Animated.View style={[styles.introTextWrap, textStyle]} pointerEvents="none">
+      {/* Poetic text — height spans full screen so justifyContent:'center' centers on screen, not just TabSlot */}
+      <Animated.View style={[styles.introTextWrap, { height: screenHeight }, textStyle]} pointerEvents="none">
         {INTRO_LINES.map((line, i) => (
           <Text key={i} style={styles.introText}>{line}</Text>
         ))}
@@ -324,7 +325,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   introTextWrap: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,

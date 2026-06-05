@@ -153,6 +153,7 @@ function VoidTabButton({ isFocused, ...props }: VoidTabButtonProps) {
   return (
     <Pressable
       {...props}
+      hitSlop={{ top: BTN_R + ARCH_H + 10 }}
       style={({ pressed }) => [styles.voidTabOuter, pressed && { opacity: 0.7 }]}
     >
       <View style={styles.voidTabBtn}>

@@ -2,6 +2,7 @@ import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef,
 import {
   Animated as RNAnimated,
   Dimensions,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -111,6 +112,10 @@ export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
         statusBarTranslucent
         onRequestClose={() => close(() => resetState())}
       >
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
         <RNAnimated.View style={[styles.backdrop, { opacity: backdropAnim }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => close(() => resetState())} />
           <RNAnimated.View style={[styles.sheet, { transform: [{ translateY: sheetAnim }] }]}>
@@ -164,6 +169,7 @@ export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
             </ScrollView>
           </RNAnimated.View>
         </RNAnimated.View>
+        </KeyboardAvoidingView>
       </Modal>
     );
   },
@@ -218,6 +224,9 @@ function MoodCircle({
 }
 
 const styles = StyleSheet.create({
+  keyboardAvoid: {
+    flex: 1,
+  },
   backdrop: {
     flex: 1,
     justifyContent: 'flex-end',

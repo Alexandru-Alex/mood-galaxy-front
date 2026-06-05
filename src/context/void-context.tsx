@@ -66,7 +66,11 @@ export function VoidProvider({ children }: { children: React.ReactNode }) {
     setRemainingSeconds(0);
     setStatus('complete');
     try {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      await new Promise(r => setTimeout(r, 120));
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      await new Promise(r => setTimeout(r, 120));
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     } catch {}
     try {
       const player = createAudioPlayer(require('../../assets/audio/chime.mp3'));
