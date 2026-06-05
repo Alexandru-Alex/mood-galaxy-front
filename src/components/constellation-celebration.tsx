@@ -73,9 +73,13 @@ export function ConstellationCelebration({
   ];
 
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dismissFadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const onDismissRef = useRef(onDismiss);
+  useEffect(() => { onDismissRef.current = onDismiss; }, [onDismiss]);
 
   useEffect(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 
     // Banner enters after 400ms
     bannerY.value = withDelay(400, withSpring(0, { damping: 18, stiffness: 160 }));
@@ -97,11 +101,12 @@ export function ConstellationCelebration({
     dismissTimer.current = setTimeout(() => {
       bannerOpacity.value = withTiming(0, { duration: 300 });
       bannerY.value = withTiming(20, { duration: 300 });
-      setTimeout(onDismiss, 320);
+      dismissFadeTimer.current = setTimeout(() => { onDismissRef.current(); }, 320);
     }, 5000);
 
     return () => {
       if (dismissTimer.current) clearTimeout(dismissTimer.current);
+      if (dismissFadeTimer.current) clearTimeout(dismissFadeTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -119,8 +124,11 @@ export function ConstellationCelebration({
 
   function handleViewGalaxy() {
     if (dismissTimer.current) clearTimeout(dismissTimer.current);
+    if (dismissFadeTimer.current) clearTimeout(dismissFadeTimer.current);
+    bannerOpacity.value = withTiming(0, { duration: 200 });
+    bannerY.value = withTiming(20, { duration: 200 });
     onViewGalaxy();
-    onDismiss();
+    dismissFadeTimer.current = setTimeout(() => { onDismissRef.current(); }, 220);
   }
 
   return (
