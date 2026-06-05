@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   },
   bannerWrap: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 160,
     left: 16,
     right: 16,
   },
