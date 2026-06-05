@@ -12,6 +12,19 @@ export const BASE_URL = __DEV__
   : (process.env.EXPO_PUBLIC_API_URL ?? 'https://moodgalaxy-backend-latest.onrender.com');
 
 let _tokenCache: string | null | undefined = undefined;
+// In-memory cache for is_new_user set synchronously before navigation so
+// welcome.tsx doesn't depend on SecureStore async timing on Android.
+let _isNewUserCache: boolean | null = null;
+
+export function setIsNewUserCache(value: boolean): void {
+  _isNewUserCache = value;
+}
+export function getIsNewUserCache(): boolean | null {
+  return _isNewUserCache;
+}
+export function clearIsNewUserCache(): void {
+  _isNewUserCache = null;
+}
 
 export async function getStoredToken(): Promise<string | null> {
   if (_tokenCache !== undefined) return _tokenCache;

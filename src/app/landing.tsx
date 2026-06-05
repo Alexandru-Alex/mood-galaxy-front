@@ -19,7 +19,7 @@ import { Starfield } from '@/components/starfield';
 import { ThemedText } from '@/components/themed-text';
 import { useAudio } from '@/context/audio-context';
 import { SoundIcon } from '@/components/sound-icon';
-import { api, getStoredToken, getPendingEmail, saveToken, saveGalaxySeed } from '@/lib/api';
+import { api, getStoredToken, getPendingEmail, saveToken, saveGalaxySeed, setIsNewUserCache } from '@/lib/api';
 import { styles } from '@/styles/landing.styles';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -104,6 +104,7 @@ export default function LandingScreen() {
       } else {
         await SecureStore.setItemAsync('is_new_user', String(data.newUser));
       }
+      setIsNewUserCache(data.newUser);
       router.replace(data.newUser ? '/welcome' : '/');
     } catch (e: unknown) {
       console.error('Google auth error:', e);

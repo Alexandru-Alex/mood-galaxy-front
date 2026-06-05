@@ -3,6 +3,8 @@ import { Redirect, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+
+import { clearIsNewUserCache, getIsNewUserCache } from '@/lib/api';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
 
 import { Astronaut } from '@/components/astronaut';
@@ -26,6 +28,12 @@ export default function WelcomeScreen() {
   const router = useRouter();
 
   useEffect(() => {
+    const cached = getIsNewUserCache();
+    if (cached !== null) {
+      clearIsNewUserCache();
+      setIsNewUser(cached);
+      return;
+    }
     if (Platform.OS === 'web') {
       setIsNewUser(localStorage.getItem('is_new_user') === 'true');
     } else {
