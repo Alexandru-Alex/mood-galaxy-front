@@ -77,7 +77,7 @@ export function DayNotesSheet({ date, onClose }: Props) {
         {loading ? (
           <ActivityIndicator color={Palette.brightLavender} style={styles.spinner} />
         ) : notes.length === 0 ? (
-          <Text style={styles.emptyText}>Nicio notă pentru această zi</Text>
+          <Text style={styles.emptyText}>No entries for this day</Text>
         ) : (
           <ScrollView contentContainerStyle={styles.listContent}>
             {notes.map((note) => (
