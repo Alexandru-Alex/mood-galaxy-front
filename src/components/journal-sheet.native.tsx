@@ -112,64 +112,72 @@ export const JournalSheet = forwardRef<JournalSheetHandle, Props>(
         statusBarTranslucent
         onRequestClose={() => close(() => resetState())}
       >
-        <KeyboardAvoidingView
-          style={styles.keyboardAvoid}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-        <RNAnimated.View style={[styles.backdrop, { opacity: backdropAnim }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => close(() => resetState())} />
+        {/* Backdrop: visual only, never resizes with keyboard */}
+        <RNAnimated.View
+          style={[StyleSheet.absoluteFill, styles.backdropBg, { opacity: backdropAnim }]}
+          pointerEvents="none"
+        />
+        {/* Tap-to-close: sits behind the sheet in z-order */}
+        <Pressable style={StyleSheet.absoluteFill} onPress={() => close(() => resetState())} />
+        {/* Positioning container: anchors sheet to bottom, never moves with keyboard */}
+        <View style={styles.sheetAnchor} pointerEvents="box-none">
           <RNAnimated.View style={[styles.sheet, { transform: [{ translateY: sheetAnim }] }]}>
             <View style={styles.handle} />
-            <ScrollView
-              style={styles.scroll}
-              contentContainerStyle={styles.content}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
+            {/* KAV lives inside the sheet so it only shrinks the ScrollView, not the sheet itself */}
+            <KeyboardAvoidingView
+              style={styles.kavInner}
+              behavior="padding"
             >
-              <Text style={styles.title}>How are you feeling?</Text>
-              <Text style={styles.subtitle}>Choose a mood, then write your thought</Text>
-
-              <Text style={styles.label}>MOOD</Text>
-              <View style={styles.moodRow}>
-                {MOODS.map(({ mood, label }) => (
-                  <MoodCircle
-                    key={mood}
-                    mood={mood}
-                    label={label}
-                    selected={selectedMood === mood}
-                    onPress={() => setSelectedMood(mood)}
-                  />
-                ))}
-              </View>
-
-              <Text style={styles.label}>
-                THOUGHT <Text style={styles.labelOptional}>(optional)</Text>
-              </Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Write your thought..."
-                placeholderTextColor="rgba(171,129,205,0.45)"
-                value={content}
-                onChangeText={setContent}
-                multiline
-                numberOfLines={3}
-              />
-
-              {error !== null && <Text style={styles.error}>{error}</Text>}
-
-              <Pressable
-                style={[styles.submitBtn, (!selectedMood || submitting) && styles.submitBtnDisabled]}
-                onPress={handleSubmit}
-                disabled={!selectedMood || submitting}
+              <ScrollView
+                style={styles.scroll}
+                contentContainerStyle={styles.content}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
               >
-                <Text style={styles.submitBtnText}>
-                  {submitting ? 'Adding...' : '✦ Add the star'}
+                <Text style={styles.title}>How are you feeling?</Text>
+                <Text style={styles.subtitle}>Choose a mood, then write your thought</Text>
+
+                <Text style={styles.label}>MOOD</Text>
+                <View style={styles.moodRow}>
+                  {MOODS.map(({ mood, label }) => (
+                    <MoodCircle
+                      key={mood}
+                      mood={mood}
+                      label={label}
+                      selected={selectedMood === mood}
+                      onPress={() => setSelectedMood(mood)}
+                    />
+                  ))}
+                </View>
+
+                <Text style={styles.label}>
+                  THOUGHT <Text style={styles.labelOptional}>(optional)</Text>
                 </Text>
-              </Pressable>
-            </ScrollView>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Write your thought..."
+                  placeholderTextColor="rgba(171,129,205,0.45)"
+                  value={content}
+                  onChangeText={setContent}
+                  multiline
+                  numberOfLines={3}
+                />
+
+                {error !== null && <Text style={styles.error}>{error}</Text>}
+
+                <Pressable
+                  style={[styles.submitBtn, (!selectedMood || submitting) && styles.submitBtnDisabled]}
+                  onPress={handleSubmit}
+                  disabled={!selectedMood || submitting}
+                >
+                  <Text style={styles.submitBtnText}>
+                    {submitting ? 'Adding...' : '✦ Add the star'}
+                  </Text>
+                </Pressable>
+              </ScrollView>
+            </KeyboardAvoidingView>
           </RNAnimated.View>
-        </RNAnimated.View>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
     );
   },
@@ -224,12 +232,14 @@ function MoodCircle({
 }
 
 const styles = StyleSheet.create({
-  keyboardAvoid: {
+  sheetAnchor: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+  },
+  kavInner: {
     flex: 1,
   },
-  backdrop: {
-    flex: 1,
-    justifyContent: 'flex-end',
+  backdropBg: {
     backgroundColor: 'rgba(5,4,16,0.6)',
   },
   sheet: {
