@@ -7,6 +7,7 @@ import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, Te
 
 import { Astronaut } from '@/components/astronaut';
 import { Float } from '@/components/float';
+import { OnboardingSplash } from '@/components/onboarding-splash';
 import { PersonIcon } from '@/components/person-icon';
 import { SpaceBackground } from '@/components/space-background';
 import { Starfield } from '@/components/starfield';
@@ -21,6 +22,7 @@ export default function WelcomeScreen() {
   const [focused, setFocused] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isNewUser, setIsNewUser] = useState<boolean | undefined>(undefined);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -46,13 +48,22 @@ export default function WelcomeScreen() {
       } else {
         await SecureStore.setItemAsync('is_new_user', 'false');
       }
-      router.replace('/');
+      setShowOnboarding(true);
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }
   };
+
+  if (showOnboarding) {
+    return (
+      <OnboardingSplash
+        onBegin={() => router.replace('/')}
+        onSkip={() => router.replace('/')}
+      />
+    );
+  }
 
   return (
     <View style={styles.container}>
