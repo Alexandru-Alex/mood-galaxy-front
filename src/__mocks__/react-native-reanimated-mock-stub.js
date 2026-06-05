@@ -87,7 +87,6 @@ module.exports = {
   withSpring,
   withRepeat,
   withSequence,
-  cancelAnimation: NOOP,
   Easing,
   runOnJS: ID,
   runOnUI: (fn) => fn,
