@@ -127,7 +127,7 @@ export default function YouScreen() {
 
   const handleSync = () => {
     rotation.value = withTiming(rotation.value + 360, { duration: 600 });
-    queryClient.invalidateQueries();
+    queryClient.invalidateQueries({ refetchType: 'all' });
     setLastSync(new Date());
     setSyncLabel('Just now');
   };
