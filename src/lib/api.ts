@@ -56,6 +56,22 @@ export async function getStoredSeed(): Promise<number | null> {
   return isNaN(n) ? null : n;
 }
 
+export async function getOnboardingComplete(): Promise<boolean> {
+  if (Platform.OS === 'web') {
+    return localStorage.getItem('onboarding_complete') === '1';
+  }
+  const raw = await SecureStore.getItemAsync('onboarding_complete');
+  return raw === '1';
+}
+
+export async function setOnboardingComplete(): Promise<void> {
+  if (Platform.OS === 'web') {
+    localStorage.setItem('onboarding_complete', '1');
+    return;
+  }
+  await SecureStore.setItemAsync('onboarding_complete', '1');
+}
+
 export async function logout(): Promise<void> {
   _tokenCache = null;
   if (Platform.OS === 'web') {
@@ -63,11 +79,13 @@ export async function logout(): Promise<void> {
     localStorage.removeItem('is_new_user');
     localStorage.removeItem('pending_email');
     localStorage.removeItem('galaxy_seed');
+    localStorage.removeItem('onboarding_complete');
   } else {
     await SecureStore.deleteItemAsync('auth_token');
     await SecureStore.deleteItemAsync('is_new_user');
     await SecureStore.deleteItemAsync('pending_email');
     await SecureStore.deleteItemAsync('galaxy_seed');
+    await SecureStore.deleteItemAsync('onboarding_complete');
   }
 }
 
