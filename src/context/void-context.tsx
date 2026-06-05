@@ -30,6 +30,7 @@ export function VoidProvider({ children }: { children: React.ReactNode }) {
   const durationRef = useRef(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const statusRef = useRef<VoidStatus>('idle');
+  const chimePlayerRef = useRef<ReturnType<typeof createAudioPlayer> | null>(null);
   const chimeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function clearTimer() {
@@ -55,6 +56,10 @@ export function VoidProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(chimeTimerRef.current);
       chimeTimerRef.current = null;
     }
+    if (chimePlayerRef.current !== null) {
+      chimePlayerRef.current.remove();
+      chimePlayerRef.current = null;
+    }
     setStatus('idle');
     setDurationSeconds(0);
     setRemainingSeconds(0);
@@ -75,7 +80,12 @@ export function VoidProvider({ children }: { children: React.ReactNode }) {
     try {
       const player = createAudioPlayer(require('../../assets/audio/chime.mp3'));
       player.play();
-      chimeTimerRef.current = setTimeout(() => { player.remove(); chimeTimerRef.current = null; }, 4000);
+      chimePlayerRef.current = player;
+      chimeTimerRef.current = setTimeout(() => {
+        player.remove();
+        chimePlayerRef.current = null;
+        chimeTimerRef.current = null;
+      }, 4000);
     } catch {}
   }, []);
 
