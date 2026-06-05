@@ -13,6 +13,7 @@ import { SpaceBackground } from '@/components/space-background';
 import { Starfield } from '@/components/starfield';
 import { AstronautConstellation } from '@/components/astronaut-constellation';
 import { Palette, Spacing } from '@/constants/theme';
+import * as SecureStore from 'expo-secure-store';
 import { api, getStoredSeed, getOnboardingComplete } from '@/lib/api';
 import type { BackendEntry } from '@/lib/types';
 import {
@@ -190,9 +191,14 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    getOnboardingComplete()
-      .then((done) => { if (!done) setShowSplash(true); })
-      .catch(() => {});
+    (async () => {
+      const done = await getOnboardingComplete().catch(() => true);
+      if (done) return;
+      const isNew = Platform.OS === 'web'
+        ? localStorage.getItem('is_new_user') === 'true'
+        : (await SecureStore.getItemAsync('is_new_user')) === 'true';
+      if (isNew) setShowSplash(true);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
