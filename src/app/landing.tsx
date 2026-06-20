@@ -188,7 +188,12 @@ export default function LandingScreen() {
           <EmailButton onPress={() => { setAuthMounted(true); setAuthVisible(true); }} />
         </View>
 
-        <Text style={styles.terms}>By continuing you agree to our Terms & Privacy Policy</Text>
+        <Text style={styles.terms}>
+          By continuing you agree to our Terms &{' '}
+          <Text style={styles.termsLink} onPress={() => router.push('/privacy-policy')}>
+            Privacy Policy
+          </Text>
+        </Text>
       </SafeAreaView>
 
       {authMounted && (

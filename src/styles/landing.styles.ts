@@ -55,6 +55,12 @@ export const styles = StyleSheet.create({
     maxWidth: 300,
     letterSpacing: 0.2,
   },
+  termsLink: {
+    fontSize: 11,
+    color: Palette.brightLavender,
+    textDecorationLine: 'underline',
+    letterSpacing: 0.2,
+  },
   muteButton: {
     position: 'absolute',
     top: 56,
